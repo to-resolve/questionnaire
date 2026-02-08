@@ -1,8 +1,8 @@
 <template>
-  <div class="preview-container pb-40">
+  <div ref="preview-container" class="preview-container pb-40">
     <div class="center mc">
-      <div class="button-group flex align-items-center space-between">
-        <div class="no-print flex space-between">
+      <div class="button-group flex space-between align-items-center">
+        <div class="flex space-between no-print">
           <el-button type="danger" @click="gobackHandle">返回</el-button>
           <el-button type="success" @click="genQuiz">生成在线问卷</el-button>
           <el-button type="warning" @click="genPDF">生成本地PDF</el-button>
@@ -29,21 +29,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { getSurveyById } from '@/db/operation'
-import { restoreComponentStatus } from '@/utils'
+import { computed, onMounted, ref } from 'vue'
+// 路由
 import { useRouter, useRoute } from 'vue-router'
-import { useEditorStore } from '@/stores/useEditor'
-import { useSurveyNo } from '@/utils/hooks'
-import { canUsedForPDF } from '@/types'
-import { ElMessage } from 'element-plus'
-import { v4 as uuidv4 } from 'uuid'
-
-const serialNum = computed(() => useSurveyNo(store.coms).value)
-
-const store = useEditorStore()
 const router = useRouter()
 const route = useRoute()
+// 仓库
+import { useEditorStore } from '@/stores/useEditor'
+const store = useEditorStore()
+// db
+import { getSurveyById } from '@/db/operation'
+// 工具
+import { restoreComponentStatus } from '@/utils'
+import { v4 as uuidv4 } from 'uuid'
+// 引入 ElementPlus 库
+import { ElMessage } from 'element-plus'
+import { isUseForPDF } from '@/types'
+
+// 获取路由参数
+// 主要解决从主页点击查看问卷时的预览
 const id = Number(route.params.id)
 if (id) {
   getSurveyById(id).then((res) => {
@@ -53,6 +57,20 @@ if (id) {
     }
   })
 }
+const scrollToTop = function () {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  })
+}
+onMounted(() => {
+  scrollToTop()
+})
+
+// 组合式函数
+import { useSurveyNo } from '@/utils/hooks'
+// 获取题目编号
+const serialNum = computed(() => useSurveyNo(store.coms).value)
 
 const gobackHandle = () => {
   const path = history.state.from
@@ -63,20 +81,26 @@ const gobackHandle = () => {
   }
 }
 
-const genPDF = () => {
-  const result = store.coms.every((item) => canUsedForPDF(item.name))
-  if (!result) {
-    ElMessage.info('当前问卷中存在不支持生成PDF的题目，请检查后再尝试！')
+// 生成PDF
+function genPDF() {
+  const checkResult = store.coms.every((item) => isUseForPDF(item.name))
+  if (!checkResult) {
+    ElMessage({
+      message: '存在不支持PDF导出的组件，请先移除这些组件',
+      type: 'warning',
+    })
     return
   }
+  // 生成PDF之前需要检查
   window.print()
 }
 
-const dialogVisible = ref(false)
-const quizLink = ref('')
-
-const genQuiz = () => {
+const dialogVisible = ref(false) // 控制弹窗
+const quizLink = ref('') // 问卷链接
+// 生成在线问卷
+function genQuiz() {
   const id = uuidv4()
+  // 将问卷信息和唯一ID保存到服务器
   fetch('/api/saveQuiz', {
     method: 'POST',
     headers: {
@@ -90,14 +114,18 @@ const genQuiz = () => {
       },
     }),
   })
+  // 打开对话框，显示在线答题链接
   quizLink.value = `${window.location.origin}/quiz/${id}`
   dialogVisible.value = true
 }
 
-const copyLink = () => {
+function copyLink() {
   dialogVisible.value = false
   navigator.clipboard.writeText(quizLink.value)
-  ElMessage.success('在线答题的链接已复制')
+  ElMessage({
+    message: '链接已复制',
+    type: 'success',
+  })
 }
 </script>
 

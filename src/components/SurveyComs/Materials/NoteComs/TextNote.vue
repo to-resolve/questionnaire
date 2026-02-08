@@ -1,7 +1,7 @@
 <template>
   <h1
     v-if="computedStatus.type === 0"
-    class="pt-10 pb-10 text-center font-weight-400"
+    class="pt-10 pb-10 text-center font-weight-200"
     :class="{
       'font-italic': !computedStatus.titleItalic,
       'font-bold': !computedStatus.titleWeight,
@@ -31,12 +31,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { getTextStatus, getStringStatusByCurrentStatus, getCurrentStatus } from '@/utils'
+// 类型
 import type { TypeStatus } from '@/types'
-import { getTextStatus, getCurrentStatus, getStringStatusByCurrentStatus } from '@/utils'
-const props = defineProps<{
-  status: TypeStatus
-}>()
-
+const props = defineProps<{ status: TypeStatus }>()
 const computedStatus = computed(() => ({
   type: getCurrentStatus(props.status.type),
   title: getTextStatus(props.status.title),
@@ -52,5 +50,3 @@ const computedStatus = computed(() => ({
   descColor: getTextStatus(props.status.descColor),
 }))
 </script>
-
-<style lang="scss" scoped></style>

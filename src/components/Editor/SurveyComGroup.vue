@@ -15,8 +15,24 @@
 </template>
 
 <script setup lang="ts">
+import type { PropType } from 'vue'
+import type { VueComType, MaterialItemList } from '@/types'
 import SurveyComItem from './SurveyComItem.vue'
-defineProps(['title', 'icon', 'list'])
+
+defineProps({
+  title: {
+    type: String,
+    required: true,
+  },
+  icon: {
+    type: Object as PropType<VueComType>,
+    required: true,
+  },
+  list: {
+    type: Array as PropType<MaterialItemList>,
+    required: true,
+  },
+})
 </script>
 
 <style scoped lang="scss">

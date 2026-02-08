@@ -21,9 +21,13 @@
 import { onMounted, ref, computed } from 'vue'
 import type { Ref } from 'vue'
 import type { QuizData } from '@/types'
+// 工具
 import { restoreComponentStatus } from '@/utils'
+// 组合式函数
 import { useSurveyNo } from '@/utils/hooks'
+// 引入 ElementPlus 库
 import { ElMessage } from 'element-plus'
+// 路由
 import { useRoute } from 'vue-router'
 const route = useRoute()
 

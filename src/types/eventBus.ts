@@ -1,4 +1,4 @@
-export type EventBus = {
-  scrollToButtom: void
+export type Events = {
+  scrollToBottom: void
   scrollToCenter: number
 }

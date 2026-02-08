@@ -1,11 +1,12 @@
 <template>
   <div v-if="store.surveyCount">
-    <draggable v-model="store.coms" item-key="index" @start="draStart">
+    <draggable v-model="store.coms" item-key="index" @start="dragstart">
       <template #item="{ element, index }">
         <div
           class="mb-10"
-          v-show="isSurveyComName(element.name)"
           @click="clickHandle(index)"
+          :key="element.id"
+          v-show="isSurveyComName(element.name)"
           :class="{
             active: store.currentComponentIndex === index,
           }"
@@ -14,7 +15,7 @@
             {{ serialNum[index] }}.
             {{
               element.status.title.status.length > 10
-                ? element.status.title.status.substring(0, 9) + '...'
+                ? element.status.title.status.substring(0, 10) + '...'
                 : element.status.title.status
             }}
           </div>
@@ -26,21 +27,29 @@
 </template>
 
 <script setup lang="ts">
-import EventBus from '@/utils/eventBus'
-import { isSurveyComName } from '@/types'
 import { computed } from 'vue'
-import draggable from 'vuedraggable'
+// EventBus
+import EventBus from '@/utils/eventBus'
 import { useEditorStore } from '@/stores/useEditor'
 const store = useEditorStore()
-
+// 拖动组件
+import draggable from 'vuedraggable'
+// 类型
+import { isSurveyComName } from '@/types'
+// 组合式函数
 import { useSurveyNo } from '@/utils/hooks'
+// 获取题目编号
 const serialNum = computed(() => useSurveyNo(store.coms).value)
-
-const draStart = () => {
+// 组件名
+defineOptions({
+  name: 'Outline',
+})
+// 拖动开始
+function dragstart() {
+  // 拖动开始的时候，将当前选中的组件取消选中
   store.setCurrentComponentIndex(-1)
 }
-
-const clickHandle = (index: number) => {
+const clickHandle = function (index: number) {
   if (store.currentComponentIndex === index) {
     store.setCurrentComponentIndex(-1)
   } else {

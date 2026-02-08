@@ -2,62 +2,72 @@
   <div>
     <div class="flex align-items-center">
       <div class="mr-10">题目选项</div>
-      <el-button :icon="Plus" size="small" circle @click="addOptionHandle"></el-button>
+      <el-button size="small" :icon="Plus" circle @click="addOptionHandle" />
     </div>
     <div v-for="(item, index) in textArr" :key="index">
       <div class="title mt-10 mb-10 flex align-items-center">
         <span>选项{{ index + 1 }}</span>
         <el-button
-          :icon="Minus"
-          circle
-          size="small"
           type="danger"
           class="ml-5 delete"
-          @click="removeOptionHandle(index)"
+          size="small"
+          :icon="Minus"
+          circle
+          @click="removeOption(index)"
         />
       </div>
       <div class="mb-5">
-        <div class="flex" v-if="item.value">
+        <div v-if="item.value" class="flex">
           <span class="title mr-5">已上传图片</span>
           <el-link type="primary" @click="deletePic(index)">删除图片</el-link>
         </div>
         <span v-else class="title">未上传图片</span>
       </div>
-      <el-input class="mb-5" v-model="item.picTitle" placeholder="图片标题" />
-      <el-input type="textarea" :rows="3" v-model="item.picDesc" placeholder="图片描述" />
+      <el-input class="mb-5" v-model="item.picTitle" placeholder="标题" />
+      <el-input
+        class="item mb-5"
+        :rows="3"
+        type="textarea"
+        placeholder="请输入题目说明（选填）"
+        v-model="textArr[index].picDesc"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, inject } from 'vue'
-import { Minus, Plus } from '@element-plus/icons-vue'
-import type { VueComType, PicTitleDescStatusArr, UpdateStatus } from '@/types'
+import { Plus, Minus } from '@element-plus/icons-vue'
+import type { VueComType, PicTitleDescStatusArr } from '@/types'
+import { inject, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-
 const props = defineProps<{
   currentStatus: number
   status: PicTitleDescStatusArr
-  id: string
   isShow: boolean
-  editCom: VueComType
   configKey: string
+  editCom: VueComType
+  id: string
 }>()
+// 定义类型
+import type { UpdateStatus } from '@/types'
+
+// 注入 updateStatus
+const updateStatus = inject<UpdateStatus>('updateStatus')
 
 const textArr = ref(props.status)
-const updateStatus = inject<UpdateStatus>('updateStatus')
-const addOptionHandle = () => {
+
+function addOptionHandle() {
   if (updateStatus) {
     updateStatus(props.configKey)
   }
 }
-const removeOptionHandle = (index: number) => {
+function removeOption(index: number) {
   if (updateStatus) {
     updateStatus(props.configKey, index)
   }
 }
-const deletePic = (index: number) => {
-  ElMessageBox.confirm('是否确认删除图片？', '警告', {
+function deletePic(index: number) {
+  ElMessageBox.confirm('是否确认删除已上传的图片？', '警告', {
     confirmButtonText: '确认',
     cancelButtonText: '取消',
     type: 'warning',
@@ -69,14 +79,21 @@ const deletePic = (index: number) => {
           index,
         })
       }
+      ElMessage({
+        type: 'success',
+        message: '已删除',
+      })
     })
     .catch(() => {
-      ElMessage.info('已取消删除')
+      ElMessage({
+        type: 'info',
+        message: '取消删除',
+      })
     })
 }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .title {
   color: var(--font-color-light);
   font-size: var(--font-size-base);

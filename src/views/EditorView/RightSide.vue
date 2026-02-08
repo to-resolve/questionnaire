@@ -1,5 +1,5 @@
 <template>
-  <div class="right-side-container">
+  <div class="right-side-container" @wheel="handleScroll($event)">
     <div
       v-if="store.currentComponentIndex === -1"
       class="content flex justify-content-center align-items-center"
@@ -13,12 +13,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, provide } from 'vue'
-import { useEditorStore } from '@/stores/useEditor'
-import EditPannel from '@/components/SurveyComs/Editltems/EditPannel.vue'
-const store = useEditorStore()
+import { computed } from 'vue'
+import { handleScroll } from '@/utils'
+import EditPannel from '@/components/SurveyComs/EditItems/EditPannel.vue'
 
+// 类型
+import type { EditorStore } from '@/types'
+import { useEditorStore } from '@/stores/useEditor'
+const store = useEditorStore() as EditorStore
 const currentCom = computed(() => store.coms[store.currentComponentIndex])
+// 右侧编辑面板的父组件提供修改状态的方法
 </script>
 
 <style scoped lang="scss">

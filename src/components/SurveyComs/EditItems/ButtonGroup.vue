@@ -10,7 +10,7 @@
   </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 defineProps({
   title: {
     type: String,
@@ -23,7 +23,7 @@ defineProps({
 })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .currentStatus {
   color: var(--info-color);
   font-size: var(--font-size-base);

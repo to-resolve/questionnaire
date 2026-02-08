@@ -1,4 +1,4 @@
-import type { EventBus } from '@/types'
 import mitt from 'mitt'
-const emitter = mitt<EventBus>()
+import type { Events } from '@/types'
+const emitter = mitt<Events>()
 export default emitter

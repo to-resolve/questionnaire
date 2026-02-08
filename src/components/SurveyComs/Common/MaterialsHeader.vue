@@ -1,9 +1,20 @@
 <template>
   <div>
     <div class="container mb-15">
-      <h2 class="title font-weight-400" :style="{ fontSize: titleSize + 'px', color: titleColor }">
-        <span class="mr-10">{{ serialNum }}.</span>
+      <h2
+        class="title font-weight-100"
+        :style="{
+          fontSize: titleSize + 'px',
+          color: titleColor,
+        }"
+      >
         <span
+          :class="{
+            'font-bold': !titleWeight,
+            'font-italic': !titleItalic,
+          }"
+          >{{ serialNum < 10 ? '0' + serialNum : serialNum }}.</span
+        ><span
           :class="{
             'font-bold': !titleWeight,
             'font-italic': !titleItalic,
@@ -17,7 +28,10 @@
           'font-bold': !descWeight,
           'font-italic': !descItalic,
         }"
-        :style="{ fontSize: descSize + 'px', color: descColor }"
+        :style="{
+          fontSize: descSize + 'px',
+          color: descColor,
+        }"
       >
         {{ desc }}
       </div>
@@ -25,7 +39,7 @@
   </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 defineProps({
   serialNum: {
     type: Number,
@@ -35,41 +49,41 @@ defineProps({
     type: String,
     default: '',
   },
-  desc: {
-    type: String,
-    default: '',
-  },
   titleSize: {
     type: String,
-    default: '22',
-  },
-  descSize: {
-    type: String,
-    default: '16',
+    default: '18',
   },
   titleWeight: {
     type: Number,
-    default: 1,
-  },
-  descWeight: {
-    type: Number,
-    default: 1,
+    default: 0,
   },
   titleItalic: {
     type: Number,
-    default: 1,
-  },
-  descItalic: {
-    type: Number,
-    default: 1,
+    default: 0,
   },
   titleColor: {
     type: String,
-    default: '',
+    default: '#000',
+  },
+  desc: {
+    type: String,
+    default: '请输入题目说明（选填）',
+  },
+  descSize: {
+    type: String,
+    default: '14',
+  },
+  descWeight: {
+    type: Number,
+    default: 0,
+  },
+  descItalic: {
+    type: Number,
+    default: 0,
   },
   descColor: {
     type: String,
-    default: '',
+    default: '#666',
   },
 })
 </script>
@@ -78,6 +92,9 @@ defineProps({
 .container {
   > h2 {
     font-size: 20px;
+    > span {
+      margin: 0 5px;
+    }
   }
 }
 .desc {

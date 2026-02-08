@@ -1,11 +1,10 @@
-// 存储画布状态
-
+/**
+ * 该仓库用于存储画布的状态
+ */
 import { defineStore } from 'pinia'
 import { markRaw } from 'vue'
-import { v4 as uuidv4 } from 'uuid'
 import textNoteDefaultStatus from '@/configs/defaultStatus/TextNote'
 import {
-  setTextStatus,
   addOption,
   removeOption,
   setPosition,
@@ -13,21 +12,25 @@ import {
   setWeight,
   setItalic,
   setColor,
+  setTextType,
+  setTextStatus,
+  setUse,
+  setOptionsStatusByIndex,
   setPicLinkByIndex,
 } from '@/stores/actions'
 import type { TypeStatus, Status, SurveyDBData } from '@/types'
 import { isSurveyComName } from '@/types'
-import TextTypeEditor from '@/components/SurveyComs/Editltems/TextTypeEditor.vue'
-import TitleEditor from '@/components/SurveyComs/Editltems/TitleEditor.vue'
-import DescEditor from '@/components/SurveyComs/Editltems/DescEditor.vue'
-import PositionEditor from '@/components/SurveyComs/Editltems/PositionEditor.vue'
-import SizeEditor from '@/components/SurveyComs/Editltems/SizeEditor.vue'
-import WeightEditor from '@/components/SurveyComs/Editltems/WeightEditor.vue'
-import ItalicEditor from '@/components/SurveyComs/Editltems/ItalicEditor.vue'
-import ColorEditor from '@/components/SurveyComs/Editltems/ColorEditor.vue'
-import { deleteSurvey, getSurveyById, saveSurvey, updateSurvey } from '@/db/operation'
+import { v4 as uuidv4 } from 'uuid'
+// 编辑器
+import TextTypeEditor from '@/components/SurveyComs/EditItems/TextTypeEditor.vue'
+import TitleEditor from '@/components/SurveyComs/EditItems/TitleEditor.vue'
+import DescEditor from '@/components/SurveyComs/EditItems/DescEditor.vue'
+import PositionEditor from '@/components/SurveyComs/EditItems/PositionEditor.vue'
+import SizeEditor from '@/components/SurveyComs/EditItems/SizeEditor.vue'
+import WeightEditor from '@/components/SurveyComs/EditItems/WeightEditor.vue'
+import ItalicEditor from '@/components/SurveyComs/EditItems/ItalicEditor.vue'
+import ColorEditor from '@/components/SurveyComs/EditItems/ColorEditor.vue'
 
-// 初始化仓库的状态
 const initStore = () =>
   [
     Object.assign({}, textNoteDefaultStatus(), {
@@ -227,12 +230,16 @@ const initStore = () =>
 
 export const useEditorStore = defineStore('editor', {
   state: () => ({
-    currentComponentIndex: -1, // 当前选择的组件索引
-    surveyCount: 0, // 问卷题目的数量
-    coms: initStore() as Status[], // 问卷题目的数组
+    currentComponentIndex: -1, // 一开始没有选中的组件
+    surveyCount: 0, // 用于对问题进行计数
+    // 每个业务组件的状态，一开始有两个默认的业务组件
+    coms: initStore(),
   }),
   actions: {
-    setTextStatus,
+    setCurrentComponentIndex(index: number) {
+      this.currentComponentIndex = index
+    },
+    // 新增一个业务组件
     addOption,
     removeOption,
     setPosition,
@@ -240,42 +247,42 @@ export const useEditorStore = defineStore('editor', {
     setWeight,
     setItalic,
     setColor,
+    setTextType,
+    setTextStatus,
+    setUse,
+    setOptionsStatusByIndex,
     setPicLinkByIndex,
-    addCom(newComs: Status) {
-      this.coms.push(newComs)
+    // 新增题目的时候，也需要取消聚焦
+    addCom(coms: Status[], newCom: Status) {
+      coms.push(newCom)
       this.currentComponentIndex = -1
-      if (isSurveyComName(newComs.name)) this.surveyCount++
+      if (isSurveyComName(newCom.name)) {
+        this.surveyCount++
+      }
     },
-    setCurrentComponentIndex(index: number) {
-      this.currentComponentIndex = index
-    },
-    removeCom(index: number) {
+    removeCom(index: number): void {
       if (isSurveyComName(this.coms[index].name)) {
         this.surveyCount--
       }
       this.coms.splice(index, 1)
     },
     resetComs() {
-      this.coms = initStore() as Status[]
-      this.currentComponentIndex = -1
       this.surveyCount = 0
-    },
-    saveComs(data: SurveyDBData) {
-      return saveSurvey(data)
-    },
-    setStore(data: SurveyDBData) {
-      this.coms = data.coms
-      this.surveyCount = data.surveyCount
       this.currentComponentIndex = -1
+      this.coms = initStore()
     },
-    updateComs(id: number, data: Partial<SurveyDBData>) {
-      return updateSurvey(id, data)
+    // 还原已有问卷的仓库状态
+    setStore(storeStatus: SurveyDBData) {
+      this.surveyCount = storeStatus.surveyCount
+      this.currentComponentIndex = -1
+      this.coms = storeStatus.coms
     },
-    getSurveyById(id: number) {
-      return getSurveyById(id)
-    },
-    deleteComs(id: number) {
-      return deleteSurvey(id)
+    // 初始化仓库，有些时候仓库已经有状态了
+    // 创建一个新的问卷的时候，需要初始化仓库
+    initStore() {
+      this.surveyCount = 0
+      this.currentComponentIndex = -1
+      this.coms = initStore()
     },
   },
 })

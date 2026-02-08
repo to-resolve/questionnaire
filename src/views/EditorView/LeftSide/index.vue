@@ -8,7 +8,7 @@
         }"
         @click="switchEditor"
       >
-        <el-icon><Memo /></el-icon>
+        <el-icon><Document /></el-icon>
         <span class="tab-item-title mt-5">题型</span>
       </div>
       <div
@@ -18,27 +18,38 @@
         }"
         @click="switchOutline"
       >
-        <el-icon><Document /></el-icon>
+        <el-icon><Memo /></el-icon>
         <span class="tab-item-title mt-5">大纲</span>
       </div>
     </div>
-    <RouterView class="tab-pane" />
+    <router-view class="tab-pane" @wheel="handleScroll($event)"></router-view>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Document, Memo } from '@element-plus/icons-vue'
 import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-const route = useRoute()
+import { Document, Memo } from '@element-plus/icons-vue'
+import { handleScroll } from '@/utils'
+import { useRouter, useRoute } from 'vue-router'
 const router = useRouter()
-const routeName = computed(() => route.name)
+const route = useRoute()
 
+const routeName = computed(() => route.name)
+const id = route.params.id
 const switchEditor = () => {
-  router.push({ name: 'survey-type' })
+  if (id) {
+    router.push(`/editor/${id}/survey-type`)
+  } else {
+    router.push('/editor/survey-type')
+  }
 }
+
 const switchOutline = () => {
-  router.push({ name: 'outline' })
+  if (id) {
+    router.push(`/editor/${id}/outline`)
+  } else {
+    router.push('/editor/outline')
+  }
 }
 </script>
 

@@ -1,43 +1,57 @@
-import type { TextProps, OptionsProps, PicLink, Status } from '@/types'
-import type { VueComType } from './common'
+import type { TextProps, OptionsProps, Status, Material, SurveyDBData } from '@/types'
 
-export type SurveyComName =
-  | 'single-select'
-  | 'single-pic-select'
-  | 'personal-info-gender'
-  | 'personal-info-education'
-  | 'text-input'
+// 定义 updateStatus 的类型
+export type UpdateStatus = (
+  configKey: string,
+  payload?: number | string | boolean | object,
+  isShowChange?: boolean,
+) => void
+export type PicLink = { link: string; index: number }
+export type GetLink = (obj: PicLink) => void
 
-// 业务组件类型(题目类型 + 非题目类型)
-export type Material = SurveyComName | 'text-note'
+export type optionsStatusByIndexPayload = {
+  val: string
+  index: number
+}
 
-export type EditComName =
-  | 'title-editor'
-  | 'desc-editor'
-  | 'position-editor'
-  | 'size-editor'
-  | 'weight-editor'
-  | 'italic-editor'
-  | 'text-type-editor'
-  | 'pic-options-editor'
-  | 'options-editor'
+export function isOptionsStatusByIndexPayload(obj: object): obj is optionsStatusByIndexPayload {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'val' in obj &&
+    typeof (obj as optionsStatusByIndexPayload).val === 'string' &&
+    'index' in obj &&
+    typeof (obj as optionsStatusByIndexPayload).index === 'number'
+  )
+}
 
-export type componentName = Material | EditComName
-
-export type ComponentMap = {
-  [key in componentName]: VueComType
+export function isPicLink(obj: object): obj is PicLink {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'link' in obj &&
+    typeof (obj as PicLink).link === 'string' &&
+    'index' in obj &&
+    typeof (obj as PicLink).index === 'number'
+  )
 }
 
 export interface Actions {
-  setTextStatus: (TextProps: TextProps, text: string) => void
-  addOption: (optionsProps: OptionsProps) => void
-  removeOption: (optionProps: OptionsProps, index: number) => number
+  addOption: (optionProps: OptionsProps) => void
+  removeOption: (optionProps: OptionsProps, index: number) => boolean
   setPosition: (positionProps: OptionsProps, index: number) => void
   setSize: (sizeProps: OptionsProps, index: number) => void
   setWeight: (weightProps: OptionsProps, index: number) => void
   setItalic: (italicProps: OptionsProps, index: number) => void
   setColor: (colorProps: TextProps, color: string) => void
-  setPicLinkByIndex: (optionProps: OptionsProps, payload: PicLink) => void
+  setTextType: (typeProps: OptionsProps, index: number) => void
+  setTextStatus: (textProps: TextProps, text: string) => void
+  setUse: (optionsProps: OptionsProps, isUse: boolean) => void
+  setOptionsStatusByIndex: (
+    optionsProps: OptionsProps,
+    payload: optionsStatusByIndexPayload,
+  ) => void
+  setPicLinkByIndex: (optionsProps: OptionsProps, payload: PicLink) => void
 }
 
 export interface MaterialStore extends Actions {
@@ -46,27 +60,16 @@ export interface MaterialStore extends Actions {
   setCurrentSurveyCom: (com: Material) => void
 }
 
-export const SurveyComNameArr = [
-  'single-select',
-  'single-pic-select',
-  'personal-info-gender',
-  'personal-info-education',
-]
-
-export function isSurveyComName(value: string): value is SurveyComName {
-  return SurveyComNameArr.includes(value as SurveyComName)
-}
-
-const PDFComs = [
-  'single-select',
-  'single-pic-select',
-  'personal-info-gender',
-  'personal-info-education',
-  'text-note',
-]
-
-export function canUsedForPDF(value: string): boolean {
-  return PDFComs.includes(value)
+export interface EditorStore extends Actions {
+  currentComponentIndex: number
+  surveyCount: number
+  coms: Status[]
+  setCurrentComponentIndex: (index: number) => void
+  addCom: (coms: Status[], newCom: Status) => void
+  setStore: (storeStatus: SurveyDBData) => void
+  initStore: () => void
+  removeCom: (index: number) => void
+  resetComs: () => void
 }
 
 export type QuizData = {

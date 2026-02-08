@@ -28,32 +28,32 @@
 </template>
 
 <script setup lang="ts">
-import { Upload } from '@element-plus/icons-vue'
 import { ref, inject, watch } from 'vue'
-import type { UploadProps } from 'element-plus'
 import { ElMessage } from 'element-plus'
+import { Upload } from '@element-plus/icons-vue'
+import type { UploadProps } from 'element-plus'
 import type { GetLink } from '@/types'
 const props = defineProps({
   picTitle: {
     type: String,
-    default: '',
+    default: '选项',
   },
   picDesc: {
     type: String,
-    default: '',
+    default: '说明（选填，限24字）',
   },
   value: {
     type: String,
-    default: '',
+    default: null,
   },
   index: {
     type: Number,
     default: 0,
   },
 })
-
-const getLink = inject<GetLink>('getLink', () => {})
 const imageUrl = ref('')
+// 预览的时候不会有注入，所以需要设置默认值
+const getPicLink = inject<GetLink>('getPicLink', () => {})
 
 watch(
   () => props.value,
@@ -61,34 +61,34 @@ watch(
     if (newVal) {
       const response = await fetch(newVal)
       const blob = await response.blob()
-      const file = new File([blob], 'image.jpg', { type: blob.type })
+      // 使用 Blob 创建 File 对象
+      const file = new File([blob], 'filename.jpg', { type: blob.type })
       imageUrl.value = URL.createObjectURL(file)
     } else {
       imageUrl.value = ''
     }
   },
-  {
-    immediate: true,
-  },
+  { immediate: true },
 )
+
 const handleAvatarSuccess: UploadProps['onSuccess'] = async (response) => {
-  if (getLink) {
-    getLink({
+  if (getPicLink)
+    getPicLink({
       index: props.index,
       link: response.imageUrl,
     })
-  }
 }
+
 const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
   if (rawFile.size / 1024 / 1024 > 2) {
-    ElMessage.error('图片大小不要超过2MB!')
+    ElMessage.error('上传图片不能超过2MB!')
     return false
   }
   return true
 }
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .container {
   width: 200px;
   height: 300px;

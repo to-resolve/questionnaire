@@ -2,8 +2,8 @@ import { db } from './db'
 import type { SurveyDBData } from '@/types'
 
 // 添加数据
-export async function saveSurvey(data: SurveyDBData) {
-  return await db.surveys.add(data)
+export async function saveSurvey(survey: SurveyDBData) {
+  return await db.surveys.add(survey)
 }
 
 // 查询数据

@@ -13,127 +13,64 @@
   </div>
 </template>
 
-<script lang="ts" setup>
-import type { OptionsStatus, PicLink, TypeStatus } from '@/types'
-import { isPicLink, isOptionsStatus, isTypeStatus } from '@/types'
-import { ElMessage } from 'element-plus'
+<script setup lang="ts">
 import { computed, provide } from 'vue'
+import { ElMessage } from 'element-plus'
+// db
+import { getSurveyById } from '@/db/operation'
 import Header from '@/components/Common/Header.vue'
-import LeftSide from './LeftSide/index.vue'
-import RightSide from './RightSide.vue'
+import LeftSide from './LeftSide/Index.vue'
 import Center from './Center.vue'
-import { useRoute } from 'vue-router'
+import RightSide from './RightSide.vue'
+// 仓库
 import { useEditorStore } from '@/stores/useEditor'
-import { restoreComponentStatus, changeEditorIsShowStatus } from '@/utils'
-const route = useRoute()
 const store = useEditorStore()
-store.resetComs()
+store.initStore() // 先初始化一次状态，保证进入编辑器时有初始状态
+// 路由
+import { useRoute } from 'vue-router'
+const route = useRoute()
+// 工具
+import { restoreComponentStatus } from '@/utils'
+// 数据仓库更新方法
+import { dispatchStatus } from '@/stores/dispatch'
+// 类型
+import type { UpdateStatus, TypeStatus, OptionsStatus, GetLink, PicLink } from '@/types'
 
-const id = computed(() => (route.params.id ? String(route.params.id) : ''))
+// 如果有传递过来 id，就从数据库中获取数据来初始化仓库
+const id = computed(() => (route.params.id ? String(route.params.id) : undefined))
 if (id.value) {
-  store.getSurveyById(Number(id.value)).then((res) => {
+  getSurveyById(Number(id.value)).then((res) => {
     if (res) {
       restoreComponentStatus(res.coms)
       store.setStore(res)
     }
   })
 }
-
-const currentCom = computed(() => store.coms[store.currentComponentIndex])
-const updateStatus = (configKey: string, payload?: number | string | boolean | PicLink) => {
-  const currentComEditorStatus = currentCom.value.status as unknown as OptionsStatus | TypeStatus
-  switch (configKey) {
-    case 'type':
-      {
-        if (typeof payload === 'number' && isTypeStatus(currentComEditorStatus)) {
-          changeEditorIsShowStatus(currentComEditorStatus, payload)
-          store.setSize(currentComEditorStatus[configKey], payload)
-        }
-      }
-      break
-    case 'title':
-    case 'desc':
-      {
-        if (typeof payload !== 'string') {
-          console.error('Invalid payload type for "title or desc". Expected a string.')
-          return
-        }
-        store.setTextStatus(currentComEditorStatus[configKey], payload as string)
-      }
-      break
-    case 'options':
-      {
-        if (isOptionsStatus(currentComEditorStatus))
-          if (typeof payload === 'number') {
-            // 删除选项
-            const result = store.removeOption(currentComEditorStatus[configKey], payload)
-            if (result) ElMessage.success('选项删除成功')
-            else ElMessage.error('至少保留两个选项')
-          } else if (typeof payload === 'object' && isPicLink(payload)) {
-            store.setPicLinkByIndex(currentComEditorStatus[configKey], payload)
-          } else {
-            // 添加选项
-            store.addOption(currentComEditorStatus[configKey])
-          }
-      }
-      break
-    case 'position':
-      {
-        if (typeof payload !== 'number') {
-          console.error('Invalid payload type for "position". Expected a number.')
-          return
-        }
-        store.setPosition(currentComEditorStatus[configKey], payload as number)
-      }
-      break
-    case 'titleSize':
-    case 'descSize':
-      {
-        if (typeof payload !== 'number') {
-          console.error(`Invalid payload type for "${configKey}". Expected a number.`)
-          return
-        }
-        store.setSize(currentComEditorStatus[configKey], payload as number)
-      }
-      break
-    case 'titleWeight':
-    case 'descWeight':
-      {
-        if (typeof payload !== 'number') {
-          console.error(`Invalid payload type for "${configKey}". Expected a number.`)
-          return
-        }
-        store.setWeight(currentComEditorStatus[configKey], payload as number)
-      }
-      break
-    case 'titleItalic':
-    case 'descItalic':
-      {
-        if (typeof payload !== 'number') {
-          console.error(`Invalid payload type for "${configKey}". Expected a number.`)
-          return
-        }
-        store.setItalic(currentComEditorStatus[configKey], payload as number)
-      }
-      break
-    case 'titleColor':
-    case 'descColor':
-      {
-        if (typeof payload !== 'string') {
-          console.error(`Invalid payload type for "${configKey}". Expected a string.`)
-          return
-        }
-        store.setColor(currentComEditorStatus[configKey], payload as string)
-      }
-      break
+// 向子组件提供修改状态的方法
+const updateStatus: UpdateStatus = (
+  configKey: string,
+  payload?: number | string | boolean | object,
+  isShowChange?: boolean,
+) => {
+  // 如果没有选中组件，不执行
+  if (store.currentComponentIndex === -1) {
+    ElMessage({
+      message: '请先将组件处于编辑状态',
+      type: 'warning',
+    })
+    return
   }
+  const status = store.coms[store.currentComponentIndex].status as unknown as
+    | TypeStatus
+    | OptionsStatus
+  dispatchStatus(store, status, configKey, payload, isShowChange)
 }
-
-const getLink = (link: PicLink) => {
+provide('updateStatus', updateStatus)
+const getPicLink: GetLink = (link: PicLink) => {
+  // 拿到上传的链接地址，从而更新状态仓库
   updateStatus('options', link)
 }
-provide('getLink', getLink)
-provide('updateStatus', updateStatus)
+provide('getPicLink', getPicLink)
 </script>
 
 <style scoped lang="scss">

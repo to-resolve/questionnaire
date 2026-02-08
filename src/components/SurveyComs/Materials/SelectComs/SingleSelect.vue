@@ -1,44 +1,51 @@
 <template>
-  <div :class="{ 'text-center': computedStatus.position }">
+  <div
+    :class="{
+      'text-center': computedState.position,
+    }"
+  >
     <MaterialsHeader
-      :title="computedStatus.title"
       :serialNum="serialNum"
-      :desc="computedStatus.desc"
-      :titleSize="computedStatus.titleSize"
-      :descSize="computedStatus.descSize"
-      :titleWeight="computedStatus.titleWeight"
-      :descWeight="computedStatus.descWeight"
-      :titleItalic="computedStatus.titleItalic"
-      :descItalic="computedStatus.descItalic"
-      :titleColor="computedStatus.titleColor"
-      :descColor="computedStatus.descColor"
+      :title="computedState.title"
+      :titleSize="computedState.titleSize"
+      :titleWeight="computedState.titleWeight"
+      :titleItalic="computedState.titleItalic"
+      :titleColor="computedState.titleColor"
+      :desc="computedState.desc"
+      :descSize="computedState.descSize"
+      :descWeight="computedState.descWeight"
+      :descItalic="computedState.descItalic"
+      :descColor="computedState.descColor"
     />
     <div class="radio-group">
-      <el-radio-group>
-        <el-radio v-for="(item, index) in computedStatus.options" :value="item" :key="index">{{
-          item
-        }}</el-radio>
+      <el-radio-group v-model="radioValue" @click.stop @change="emitAnswer">
+        <el-radio v-for="(item, index) in computedState.options" :value="item" :key="index">
+          {{ item }}
+        </el-radio>
       </el-radio-group>
     </div>
   </div>
 </template>
 
-<script lang="ts" setup>
-import { computed } from 'vue'
-import MaterialsHeader from '@/components/SurveyComs/Common/MaterialsHeader.vue'
-import type { OptionsStatus } from '@/types'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
 import {
   getTextStatus,
-  getStringStatus,
-  getCurrentStatus,
   getStringStatusByCurrentStatus,
+  getCurrentStatus,
+  getStringStatus,
 } from '@/utils'
+import MaterialsHeader from '@/components/SurveyComs/Common/MaterialsHeader.vue'
+// 类型
+import type { OptionsStatus } from '@/types'
 const props = defineProps<{
-  serialNum: number
   status: OptionsStatus
+  serialNum: number
 }>()
 
-const computedStatus = computed(() => ({
+const emits = defineEmits(['updateAnswer'])
+
+const computedState = computed(() => ({
   title: getTextStatus(props.status.title),
   desc: getTextStatus(props.status.desc),
   options: getStringStatus(props.status.options),
@@ -52,6 +59,12 @@ const computedStatus = computed(() => ({
   titleColor: getTextStatus(props.status.titleColor),
   descColor: getTextStatus(props.status.descColor),
 }))
+
+const radioValue = ref<string>('')
+
+const emitAnswer = () => {
+  emits('updateAnswer', radioValue.value)
+}
 </script>
 
-<style lang="sass" scoped></style>
+<style scoped lang="scss"></style>

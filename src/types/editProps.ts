@@ -1,10 +1,16 @@
 import type { VueComType } from './common'
 
+// status中各个props的类型
 export interface BaseProps {
   id: string
   isShow: boolean
-  name: string
   editCom: VueComType
+  name: string
+  isUse?: boolean
+}
+
+export interface TextProps extends BaseProps {
+  status: string
 }
 
 export type StringStatusArr = string[]
@@ -15,17 +21,14 @@ export type PicTitleDescStatusArr = Array<{
   value: string
 }>
 
-export interface TextProps extends BaseProps {
-  status: string
-}
-
-export type optinsStatusArr = StringStatusArr | ValueStatusArr | PicTitleDescStatusArr
+export type StatusArray = StringStatusArr | ValueStatusArr | PicTitleDescStatusArr
 
 export interface OptionsProps extends BaseProps {
-  status: optinsStatusArr
+  status: StringStatusArr | ValueStatusArr | PicTitleDescStatusArr
   currentStatus: number
 }
 
+// 整个status的类型
 export interface BaseStatus {
   title: TextProps
   desc: TextProps
@@ -40,54 +43,65 @@ export interface BaseStatus {
   descColor: TextProps
 }
 
-export interface OptionsStatus extends BaseStatus {
-  options: OptionsProps
-}
-
 export interface TypeStatus extends BaseStatus {
   type: OptionsProps
 }
 
-export function isOptionsStatus(status: BaseStatus): status is OptionsStatus {
-  return 'options' in status
+export interface OptionsStatus extends BaseStatus {
+  options: OptionsProps
 }
 
-export function isTypeStatus(status: BaseStatus): status is TypeStatus {
-  return 'type' in status
+// 类型保护函数：检查是否有 type 属性
+export function hasType(status: BaseStatus): status is TypeStatus {
+  return (status as TypeStatus).type !== undefined
 }
 
-export function isStringArr(status: optinsStatusArr): status is string[] {
-  return Array.isArray(status) && typeof status[0] === 'string'
+// 类型保护函数：检查是否有 options 属性
+export function hasOptions(status: BaseStatus): status is OptionsStatus {
+  return (status as OptionsStatus).options !== undefined
 }
 
-export function isValueStatusArr(status: optinsStatusArr): status is ValueStatusArr {
+/**
+ * 下面两个类型保护函数用于检查 props 是否为 TextProps 或 OptionsProps 类型
+ */
+export function isTextProps(props: TextProps | OptionsProps): props is TextProps {
+  return typeof props.status === 'string'
+}
+
+export function isOptionsProps(props: TextProps | OptionsProps): props is OptionsProps {
+  return props && Array.isArray(props.status)
+}
+
+/**
+ * 下面三个类型保护函数用于检查 status 是否为：
+ * Array<{ value: string; status: string }>
+ * Array<{ picTitle: string; picDesc: string }>
+ * string[]
+ */
+
+// 类型谓词函数，用于检查 status 是否为 Array<{ value: string; status: string }>
+export function isValueStatusArray(status: StatusArray): status is ValueStatusArr {
   return (
     Array.isArray(status) &&
+    status.length > 0 &&
     typeof status[0] === 'object' &&
     'value' in status[0] &&
     'status' in status[0]
   )
 }
 
-export function isPicTitleDescStatusArr(status: optinsStatusArr): status is PicTitleDescStatusArr {
+// 类型谓词函数，用于检查 status 是否为 Array<{ picTitle: string; picDesc: string }>
+export function isPicTitleDescArray(status: StatusArray): status is PicTitleDescStatusArr {
   return (
     Array.isArray(status) &&
+    status.length > 0 &&
     typeof status[0] === 'object' &&
     'picTitle' in status[0] &&
-    'picDesc' in status[0] &&
-    'value' in status[0]
+    'picDesc' in status[0]
   )
 }
 
-export type PicLink = { link: string; index: number }
-
-export function isPicLink(obj: object): obj is PicLink {
-  return 'link' in obj && 'index' in obj
+// 类型谓词函数，用于检查 status 是否为 string[]
+export function isStringArray(status: StatusArray): status is string[] {
+  return Array.isArray(status) && (status.length === 0 || typeof status[0] === 'string')
 }
-
-export type GetLink = (obj: PicLink) => void
-
-export type UpdateStatus = (
-  configKey: string,
-  payload?: number | string | boolean | PicLink,
-) => void

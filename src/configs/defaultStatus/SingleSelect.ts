@@ -1,21 +1,17 @@
-// 单选题的编辑组件有哪些
-
-// 业务组件
 import SingleSelect from '@/components/SurveyComs/Materials/SelectComs/SingleSelect.vue'
-
-// 编辑组件
-import TitleEditor from '@/components/SurveyComs/Editltems/TitleEditor.vue'
-import DescEditor from '@/components/SurveyComs/Editltems/DescEditor.vue'
-import OptionsEditor from '@/components/SurveyComs/Editltems/OptionsEditor.vue'
-import ColorEditor from '@/components/SurveyComs/Editltems/ColorEditor.vue'
-import PositionEditor from '@/components/SurveyComs/Editltems/PositionEditor.vue'
-import ItalicEditor from '@/components/SurveyComs/Editltems/ItalicEditor.vue'
-import WeightEditor from '@/components/SurveyComs/Editltems/WeightEditor.vue'
-import SizeEditor from '@/components/SurveyComs/Editltems/SizeEditor.vue'
+import type { Status } from '@/types'
+import TitleEditor from '@/components/SurveyComs/EditItems/TitleEditor.vue'
+import DescEditor from '@/components/SurveyComs/EditItems/DescEditor.vue'
+import PositionEditor from '@/components/SurveyComs/EditItems/PositionEditor.vue'
+import SizeEditor from '@/components/SurveyComs/EditItems/SizeEditor.vue'
+import WeightEditor from '@/components/SurveyComs/EditItems/WeightEditor.vue'
+import ItalicEditor from '@/components/SurveyComs/EditItems/ItalicEditor.vue'
+import ColorEditor from '@/components/SurveyComs/EditItems/ColorEditor.vue'
+import OptionsEditor from '@/components/SurveyComs/EditItems/OptionsEditor.vue'
 import { markRaw } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
 
-export default function () {
+export default function (): Status {
   return {
     type: markRaw(SingleSelect),
     name: 'single-select',
@@ -23,22 +19,22 @@ export default function () {
     status: {
       title: {
         id: uuidv4(),
-        status: '默认标题内容',
+        status: '默认单选题标题',
         isShow: true,
         name: 'title-editor',
         editCom: markRaw(TitleEditor),
       },
       desc: {
         id: uuidv4(),
-        status: '默认描述内容',
+        status: '默认单选题描述内容',
         isShow: true,
         name: 'desc-editor',
         editCom: markRaw(DescEditor),
       },
       options: {
         id: uuidv4(),
-        status: ['默认选项1', '默认选项2'],
-        currentStatus: 0,
+        currentStatus: 0, // 默认选中下标
+        status: ['默认单选题选项1', '默认单选题选项2'],
         isShow: true,
         name: 'options-editor',
         editCom: markRaw(OptionsEditor),

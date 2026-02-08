@@ -1,13 +1,11 @@
 <template>
   <Layout>
-    <RouterLink class="link-item mb-15" to="/text-input" exact-active-class="link-item-active"
-      >文本输入</RouterLink
+    <Router-Link to="/text-input" class="link-item mb-15" exact-active-class="link-item-active"
+      >文本输入</Router-Link
     >
   </Layout>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 import Layout from './Layout.vue'
 </script>
-
-<style scoped lang="scss"></style>

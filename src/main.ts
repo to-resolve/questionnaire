@@ -4,10 +4,12 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 
+// 引入 Element Plus 组件库
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 
+// 引入样式
 import './assets/css/index.scss'
 
 // 引入 Font Awesome 图标库
@@ -20,6 +22,7 @@ library.add(fas)
 
 const app = createApp(App)
 
+// 注册 FontAwesomeIcon 组件
 app.component('font-awesome-icon', FontAwesomeIcon)
 
 app.use(createPinia())

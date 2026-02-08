@@ -2,19 +2,21 @@
   <div>
     <div class="container flex self-start align-items-center border-box">
       <div class="left flex justify-content-center align-items-center">
-        <el-button type="primary" plain :icon="ArrowLeft" circle size="small" @click="goToHome" />
+        <el-button :icon="ArrowLeft" circle size="small" @click="goHome" />
       </div>
       <div class="center flex align-items-center space-between pl-15 pr-15">
         <div v-if="isEditor">
           <div v-if="id">
-            <el-button type="warning" size="small" @click="updateSurvey">更新问卷</el-button>
+            <el-button type="warning" size="small" @click="update(store, Number(id))"
+              >更新问卷</el-button
+            >
           </div>
           <div v-else>
             <el-button type="danger" size="small" @click="reset">重置问卷</el-button>
             <el-button type="success" size="small" @click="saveSurvey">保存问卷</el-button>
           </div>
         </div>
-        <div>
+        <div v-if="isEditor">
           <el-button type="primary" size="small" @click="preview">预览</el-button>
         </div>
       </div>
@@ -25,134 +27,63 @@
   </div>
 </template>
 
-<script lang="ts" setup>
-import { useEditorStore } from '@/stores/useEditor'
-import { ArrowLeft } from '@element-plus/icons-vue'
-import { useRouter } from 'vue-router'
+<script setup lang="ts">
 import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { ArrowLeft } from '@element-plus/icons-vue'
+// 路由
+import { useRouter } from 'vue-router'
 const router = useRouter()
-const store = useEditorStore()
+// 工具方法
+import { save, update } from '@/utils/dboperate'
+// 类型
+import type { EditorStore } from '@/types'
+// 仓库
+import { useEditorStore } from '@/stores/useEditor'
+const store = useEditorStore() as EditorStore
 
+const goHome = () => {
+  localStorage.setItem('activeView', 'home')
+  router.push('/')
+}
 const props = defineProps({
   isEditor: {
     type: Boolean,
-    requirde: true,
+    required: true,
   },
   id: {
     type: String,
     default: '',
   },
 })
-
-const goToHome = () => {
-  localStorage.setItem('activeView', 'home')
-  router.push('/')
-}
-const avatar = ref('https://avatars.githubusercontent.com/u/12345678?v=4')
-
-const reset = () => {
-  ElMessageBox.confirm('确定要重置问卷吗？', '提示', {
+const avatar = ref('https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif')
+// 重置题目
+function reset() {
+  ElMessageBox.confirm('是否确定重置试卷？已有题目将全部删除', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning',
   })
     .then(() => {
       store.resetComs()
-      ElMessage.success('重置问卷成功')
+      ElMessage({
+        type: 'success',
+        message: '已重置',
+      })
     })
     .catch(() => {
-      ElMessage.info('已取消重置')
+      console.log('取消重置')
     })
 }
 
-const saveSurvey = (date?: string) => {
-  if (date) {
-    ElMessageBox.prompt('请输入要保存的问卷标题', '提示', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'info',
-    })
-      .then(({ value }) => {
-        const surveyToSave = {
-          createDate: new Date().getTime(),
-          updateDate: new Date().getTime(),
-          title: value,
-          surveyCount: store.surveyCount,
-          coms: JSON.parse(JSON.stringify(store.coms)),
-        }
-        store
-          .saveComs(surveyToSave)
-          .then((id) => {
-            router.push({
-              path: `/preview/${id}`,
-              state: { from: 'editor' },
-            })
-            ElMessage.success('保存问卷成功')
-          })
-          .catch(() => {
-            ElMessage.error('保存问卷失败')
-          })
-      })
-      .catch(() => {
-        ElMessage.info('已取消保存')
-      })
-  } else {
-    ElMessageBox.prompt('请输入要保存的问卷标题', '提示', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'info',
-    })
-      .then(({ value }) => {
-        const surveyToSave = {
-          createDate: new Date().getTime(),
-          updateDate: new Date().getTime(),
-          title: value,
-          surveyCount: store.surveyCount,
-          coms: JSON.parse(JSON.stringify(store.coms)),
-        }
-        store
-          .saveComs(surveyToSave)
-          .then((id) => {
-            router.push(`/editor/${id}/survey-type`)
-            ElMessage.success('保存问卷成功')
-          })
-          .catch(() => {
-            ElMessage.error('保存问卷失败')
-          })
-      })
-      .catch(() => {
-        ElMessage.info('已取消保存')
-      })
-  }
-}
-
-const updateSurvey = () => {
-  ElMessageBox.confirm('是否确定更新问卷?', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning',
+// 保存题目
+function saveSurvey() {
+  save(store).then((id) => {
+    router.push(`/editor/${id}/survey-type`)
   })
-    .then(() => {
-      store
-        .updateComs(Number(props.id), {
-          updateDate: new Date().getTime(),
-          surveyCount: store.surveyCount,
-          coms: JSON.parse(JSON.stringify(store.coms)),
-        })
-        .then(() => {
-          ElMessage.success('更新问卷成功')
-        })
-        .catch(() => {
-          ElMessage.error('更新问卷失败')
-        })
-    })
-    .catch(() => {
-      ElMessage.error('更新问卷失败')
-    })
 }
 
-const preview = () => {
+function preview() {
   ElMessageBox.confirm('预览会保存问卷，是否继续？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
@@ -160,28 +91,25 @@ const preview = () => {
   })
     .then(() => {
       if (props.id) {
-        router.push({
-          path: `/preview/${props.id}`,
-          state: { from: 'editor' },
+        // 说明是更新
+        update(store, Number(props.id)).then(() => {
+          router.push({
+            path: `/preview/${props.id}`,
+            state: { from: 'editor' },
+          })
         })
-        store
-          .updateComs(Number(props.id), {
-            updateDate: new Date().getTime(),
-            surveyCount: store.surveyCount,
-            coms: JSON.parse(JSON.stringify(store.coms)),
-          })
-          .then(() => {
-            ElMessage.success('保存问卷成功')
-          })
-          .catch(() => {
-            ElMessage.error('保存问卷失败')
-          })
       } else {
-        saveSurvey('editor')
+        // 说明是新建
+        save(store).then((id) => {
+          router.push({
+            path: `/preview/${id}`,
+            state: { from: 'editor' },
+          })
+        })
       }
     })
     .catch(() => {
-      ElMessage.info('已取消预览')
+      console.log('取消预览')
     })
 }
 </script>

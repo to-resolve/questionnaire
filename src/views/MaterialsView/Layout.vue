@@ -4,13 +4,13 @@
       <slot />
     </div>
     <div class="center">
-      <router-view v-slot="{ Component }">
+      <RouterView v-slot="{ Component }">
         <component
           :is="Component"
           :status="store.coms[store.currentMaterialCom].status"
           :serialNum="1"
         />
-      </router-view>
+      </RouterView>
     </div>
     <div class="right">
       <EditPannel :com="currentCom" />
@@ -18,140 +18,75 @@
   </div>
 </template>
 
-<script lang="ts" setup>
-import type { PicLink, MaterialStore } from '@/types'
-import { isPicLink, isOptionsStatus, isTypeStatus } from '@/types'
-import EditPannel from '@/components/SurveyComs/Editltems/EditPannel.vue'
+<script setup lang="ts">
 import { computed, provide } from 'vue'
+import EditPannel from '@/components/SurveyComs/EditItems/EditPannel.vue'
+// 类型
+import type {
+  MaterialStore,
+  UpdateStatus,
+  TypeStatus,
+  OptionsStatus,
+  GetLink,
+  PicLink,
+} from '@/types'
+// 仓库
 import { useMaterialStore } from '@/stores/useMaterial'
-import { ElMessage } from 'element-plus'
-import { changeEditorIsShowStatus } from '@/utils'
+// 数据仓库更新方法
+import { dispatchStatus } from '@/stores/dispatch'
+
 const store = useMaterialStore() as unknown as MaterialStore
 const currentCom = computed(() => store.coms[store.currentMaterialCom])
 
-const updateStatus = (configKey: string, payload?: number | string | boolean | object) => {
-  switch (configKey) {
-    case 'type':
-      {
-        if (typeof payload === 'number' && isTypeStatus(currentCom.value.status)) {
-          console.log(111)
-          changeEditorIsShowStatus(currentCom.value.status, payload)
-          store.setSize(currentCom.value.status[configKey], payload)
-        }
-      }
-      break
-    case 'title':
-    case 'desc':
-      {
-        if (typeof payload !== 'string') {
-          console.error('Invalid payload type for "title or desc". Expected a string.')
-          return
-        }
-        store.setTextStatus(currentCom.value.status[configKey], payload as string)
-      }
-      break
-    case 'options':
-      {
-        if (isOptionsStatus(currentCom.value.status))
-          if (typeof payload === 'number') {
-            // 删除选项
-            const result = store.removeOption(currentCom.value.status[configKey], payload)
-            if (result) ElMessage.success('选项删除成功')
-            else ElMessage.error('至少保留两个选项')
-          } else if (typeof payload === 'object' && isPicLink(payload)) {
-            store.setPicLinkByIndex(currentCom.value.status[configKey], payload)
-          } else {
-            // 添加选项
-            store.addOption(currentCom.value.status[configKey])
-          }
-      }
-      break
-    case 'position':
-      {
-        if (typeof payload !== 'number') {
-          console.error('Invalid payload type for "position". Expected a number.')
-          return
-        }
-        store.setPosition(currentCom.value.status[configKey], payload as number)
-      }
-      break
-    case 'titleSize':
-    case 'descSize':
-      {
-        if (typeof payload !== 'number') {
-          console.error(`Invalid payload type for "${configKey}". Expected a number.`)
-          return
-        }
-        store.setSize(currentCom.value.status[configKey], payload as number)
-      }
-      break
-    case 'titleWeight':
-    case 'descWeight':
-      {
-        if (typeof payload !== 'number') {
-          console.error(`Invalid payload type for "${configKey}". Expected a number.`)
-          return
-        }
-        store.setWeight(currentCom.value.status[configKey], payload as number)
-      }
-      break
-    case 'titleItalic':
-    case 'descItalic':
-      {
-        if (typeof payload !== 'number') {
-          console.error(`Invalid payload type for "${configKey}". Expected a number.`)
-          return
-        }
-        store.setItalic(currentCom.value.status[configKey], payload as number)
-      }
-      break
-    case 'titleColor':
-    case 'descColor':
-      {
-        if (typeof payload !== 'string') {
-          console.error(`Invalid payload type for "${configKey}". Expected a string.`)
-          return
-        }
-        store.setColor(currentCom.value.status[configKey], payload as string)
-      }
-      break
-  }
+// 右侧编辑面板的父组件提供修改状态的方法
+const updateStatus: UpdateStatus = (
+  configKey: string,
+  payload?: number | string | boolean | object,
+  isShowChange?: boolean,
+) => {
+  const status = store.coms[store.currentMaterialCom].status as unknown as
+    | TypeStatus
+    | OptionsStatus
+  dispatchStatus(store, status, configKey, payload, isShowChange)
 }
+provide('updateStatus', updateStatus)
 
-const getLink = (link: PicLink) => {
+const getPicLink: GetLink = (link: PicLink) => {
+  // 拿到上传的链接地址，从而更新状态仓库
   updateStatus('options', link)
 }
-provide('getLink', getLink)
-provide('updateStatus', updateStatus)
+provide('getPicLink', getPicLink)
 </script>
 
 <style scoped lang="scss">
 .layout-container {
   width: 100%;
+  // Header组件高度50px，h1高度50px，上下margin 20px，最后20px是额外多减去一部分，避免贴底
   height: calc(100vh - 100px - 40px - 20px);
   align-items: flex-start;
   border: 1px solid var(--border-color);
   border-top-right-radius: var(--border-radius-lg);
-  border-bottom-right-radius: var(--border-radius-lg);
   border-bottom-left-radius: var(--border-radius-lg);
-  .left {
-    width: 180px;
-    text-align: center;
-    align-items: flex-start;
-    padding: 20px;
-  }
-  .center {
-    width: 550px;
-    height: calc(100vh - 100px - 60px - 40px - 20px);
-    overflow-y: scroll;
-    padding: 30px;
-    border-left: 1px solid var(--border-color);
-  }
-  .right {
-    width: 400px;
-    height: calc(100vh - 100px - 40px - 20px);
-    overflow-y: scroll;
-    border-left: 1px solid var(--border-color);
-  }
+  border-bottom-right-radius: var(--border-radius-lg);
+}
+.left {
+  width: 180px;
+  text-align: center;
+  align-items: flex-start;
+  padding: 20px;
+}
+.center {
+  width: 550px;
+  // 多减去的60px是上下的padding，，最后20px是额外多减去一部分，避免贴底
+  height: calc(100vh - 100px - 40px - 60px - 20px);
+  overflow-y: scroll;
+  padding: 30px;
+  border-left: 1px solid var(--border-color);
+}
+.right {
+  width: 350px;
+  height: calc(100vh - 100px - 40px - 20px);
+  overflow-y: scroll;
+  border-left: 1px solid var(--border-color);
 }
 </style>
