@@ -36,6 +36,7 @@ const route = useRoute()
 
 const routeName = computed(() => route.name)
 const id = route.params.id
+
 const switchEditor = () => {
   if (id) {
     router.push(`/editor/${id}/survey-type`)

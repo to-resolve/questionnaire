@@ -76,3 +76,8 @@ export type QuizData = {
   surveyCount: number
   coms: Status[]
 }
+
+export interface surveyInfo {
+  title: string
+  description: string
+}

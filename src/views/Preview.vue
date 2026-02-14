@@ -38,9 +38,11 @@ const route = useRoute()
 import { useEditorStore } from '@/stores/useEditor'
 const store = useEditorStore()
 // db
-import { getSurveyById } from '@/db/operation'
+// import { getSurveyById } from '@/db/operation'
+import { getSurveyListByUserId } from '@/api/questionnaire'
 // 工具
 import { restoreComponentStatus } from '@/utils'
+import { parseToken } from '@/utils/auth'
 import { v4 as uuidv4 } from 'uuid'
 // 引入 ElementPlus 库
 import { ElMessage } from 'element-plus'
@@ -50,10 +52,11 @@ import { isUseForPDF } from '@/types'
 // 主要解决从主页点击查看问卷时的预览
 const id = Number(route.params.id)
 if (id) {
-  getSurveyById(id).then((res) => {
+  getSurveyListByUserId(parseToken(), id).then((res) => {
     if (res) {
-      restoreComponentStatus(res.coms)
-      store.setStore(res)
+      const newComs = restoreComponentStatus(JSON.parse(res.data[0].coms))
+      res.data[0].coms = newComs
+      store.setStore(res.data[0])
     }
   })
 }

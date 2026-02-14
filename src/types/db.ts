@@ -1,10 +1,27 @@
 import type { Status } from './common'
-export interface SurveyDBData {
-  createDate: number
-  updateDate: number
+
+export interface updateSurveyData {
+  id: number
+  userId: number
+  surveyCount?: number
+  coms?: string
+  title?: string
+  description?: string
+}
+
+export interface addSurveyData {
   title: string
   surveyCount: number
-  coms: Status[]
+  // coms: Status[]
+  coms: string
+  status: number
+  description: string
+  userId: number
+}
+
+export interface SurveyDBData extends addSurveyData {
+  createTime: number
+  updateTime: number
 }
 
 export interface SurveyDBReturnData extends SurveyDBData {

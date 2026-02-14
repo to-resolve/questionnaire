@@ -60,6 +60,7 @@ export type ComponentMap = {
   [key in componentName]: VueComType
 }
 
+// 记录所有事题目类型的题型
 const SurveyComNameArr: SurveyComName[] = [
   'single-select',
   'multi-select',
@@ -88,6 +89,7 @@ const SurveyComNameArr: SurveyComName[] = [
   'personal-info-position',
 ]
 
+// 判断传入的题型是否是题目类型的题型
 export function isSurveyComName(value: string): value is SurveyComName {
   return SurveyComNameArr.includes(value as SurveyComName)
 }

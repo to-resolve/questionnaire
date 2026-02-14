@@ -13,7 +13,7 @@
           </div>
           <div v-else>
             <el-button type="danger" size="small" @click="reset">重置问卷</el-button>
-            <el-button type="success" size="small" @click="saveSurvey">保存问卷</el-button>
+            <el-button type="success" size="small" @click="openSurveyDialog">保存问卷</el-button>
           </div>
         </div>
         <div v-if="isEditor">
@@ -24,6 +24,8 @@
         <el-avatar :size="30" :src="avatar" />
       </div>
     </div>
+
+    <SurveyInfoDialog :store="store" :is-preview="isPreview" v-model:visible="dialogVisible" />
   </div>
 </template>
 
@@ -31,16 +33,18 @@
 import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
-// 路由
+
 import { useRouter } from 'vue-router'
 const router = useRouter()
-// 工具方法
-import { save, update } from '@/utils/dboperate'
-// 类型
+
+import { update } from '@/utils/dboperate'
 import type { EditorStore } from '@/types'
-// 仓库
+import SurveyInfoDialog from './SurveyInfoDialog.vue'
 import { useEditorStore } from '@/stores/useEditor'
 const store = useEditorStore() as EditorStore
+
+const isPreview = ref(0) // 0：主页，1：预览，2：保存
+const dialogVisible = ref(false)
 
 const goHome = () => {
   localStorage.setItem('activeView', 'home')
@@ -76,13 +80,6 @@ function reset() {
     })
 }
 
-// 保存题目
-function saveSurvey() {
-  save(store).then((id) => {
-    router.push(`/editor/${id}/survey-type`)
-  })
-}
-
 function preview() {
   ElMessageBox.confirm('预览会保存问卷，是否继续？', '提示', {
     confirmButtonText: '确定',
@@ -100,17 +97,18 @@ function preview() {
         })
       } else {
         // 说明是新建
-        save(store).then((id) => {
-          router.push({
-            path: `/preview/${id}`,
-            state: { from: 'editor' },
-          })
-        })
+        isPreview.value = 1
+        openSurveyDialog()
       }
     })
     .catch(() => {
       console.log('取消预览')
     })
+}
+
+function openSurveyDialog() {
+  isPreview.value = 2
+  dialogVisible.value = true
 }
 </script>
 

@@ -112,6 +112,7 @@ export const restoreComponentStatus = (coms: Status[]) => {
       com.status[key].editCom = componentMap[name]
     }
   })
+  return coms
 }
 
 export const updateInitStatusBeforeAdd = (comStatus: Status, newMaterialName: Material) => {
