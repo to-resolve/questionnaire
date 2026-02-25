@@ -36,20 +36,28 @@ export function handleScroll(event: WheelEvent) {
 
 // 将时间戳转为日期格式
 // 日期格式化函数
-export function formatDate(
-  row: SurveyDBData,
-  column: TableColumnCtx<SurveyDBData>,
-  cellValue: number,
-) {
-  const options: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+// 定义类型：限定显示粒度的参数值，增强类型安全
+export function formatDate(dateStr: string | undefined | null, withTime: boolean = false): string {
+  if (!dateStr || typeof dateStr !== 'string') {
+    return '-'
   }
-  return new Intl.DateTimeFormat('zh-CN', options).format(new Date(cellValue))
+
+  if (withTime) {
+    return dateStr
+  }
+
+  const dateObj = new Date(dateStr)
+  if (isNaN(dateObj.getTime())) {
+    return '无效日期'
+  }
+
+  const year = dateObj.getFullYear()
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0')
+  const day = String(dateObj.getDate()).padStart(2, '0')
+
+  let result = `${year}年${month}月${day}日`
+
+  return result
 }
 
 export function getTextStatus(props: TextProps) {

@@ -8,6 +8,12 @@ export async function getSurveyListByUserId(userId: number, id?: number) {
   return data
 }
 
+// 根据用户id分页查询问卷
+export async function getSurveyPageListByUserId(param: {}) {
+  const data = await request.get('/survey/page', param)
+  return data
+}
+
 // 新增问卷
 export async function addSurvey(survey: addSurveyData) {
   // POST请求：数据放在请求体（body）中
