@@ -39,14 +39,14 @@
         </el-menu-item>
       </el-sub-menu>
 
+      <el-menu-item index="/aiSurvey">
+        <el-icon><MagicStick /></el-icon>
+        <template #title>智能问卷</template>
+      </el-menu-item>
+
       <el-menu-item index="/personal">
         <el-icon><User /></el-icon>
         <template #title>个人中心</template>
-      </el-menu-item>
-
-      <el-menu-item index="/aiSurvey">
-        <el-icon><MagicStick /></el-icon>
-        <template #title>AI问卷</template>
       </el-menu-item>
     </el-menu>
 

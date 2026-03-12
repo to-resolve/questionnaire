@@ -211,62 +211,6 @@
                 </el-card>
               </div>
             </el-tab-pane>
-
-            <!-- 使用统计 -->
-            <!-- <el-tab-pane label="使用统计" name="statistics">
-              <div class="tab-content">
-                <el-card shadow="hover" class="info-card">
-                  <template #header>
-                    <div class="card-header">
-                      <el-icon class="header-icon"><DataAnalysis /></el-icon>
-                      <span>使用情况</span>
-                    </div>
-                  </template>
-
-                  <div class="statistics-grid">
-                    <div class="stat-card">
-                      <div class="stat-icon primary">
-                        <el-icon><Document /></el-icon>
-                      </div>
-                      <div class="stat-content">
-                        <div class="stat-number">{{ userInfoStats.surveysCreated }}</div>
-                        <div class="stat-title">创建问卷</div>
-                      </div>
-                    </div>
-
-                    <div class="stat-card">
-                      <div class="stat-icon success">
-                        <el-icon><Collection /></el-icon>
-                      </div>
-                      <div class="stat-content">
-                        <div class="stat-number">{{ userInfoStats.responsesCollected }}</div>
-                        <div class="stat-title">收集答卷</div>
-                      </div>
-                    </div>
-
-                    <div class="stat-card">
-                      <div class="stat-icon warning">
-                        <el-icon><MagicStick /></el-icon>
-                      </div>
-                      <div class="stat-content">
-                        <div class="stat-number">{{ userInfoStats.templatesUsed }}</div>
-                        <div class="stat-title">使用模板</div>
-                      </div>
-                    </div>
-
-                    <div class="stat-card">
-                      <div class="stat-icon info">
-                        <el-icon><Timer /></el-icon>
-                      </div>
-                      <div class="stat-content">
-                        <div class="stat-number">{{ userInfoStats.joinDays }}</div>
-                        <div class="stat-title">活跃天数</div>
-                      </div>
-                    </div>
-                  </div>
-                </el-card>
-              </div>
-            </el-tab-pane> -->
           </el-tabs>
         </el-col>
       </el-row>
@@ -326,7 +270,7 @@
         </el-form-item>
 
         <el-form-item label="手机号" prop="phone">
-          <el-input v-model="editForm.phone" placeholder="请输入邮箱地址" />
+          <el-input v-model="editForm.phone" placeholder="请输入手机号" />
         </el-form-item>
       </el-form>
 

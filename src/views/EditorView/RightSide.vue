@@ -28,10 +28,10 @@ const currentCom = computed(() => store.coms[store.currentComponentIndex])
 <style scoped lang="scss">
 .right-side-container {
   width: 320px;
-  height: calc(100vh - 50px - 40px);
-  position: fixed;
-  right: 20px;
-  top: 70px;
+  height: calc(100vh - 60px - 40px);
+  position: sticky;
+  top: 20px;
+  flex-shrink: 0;
   background-color: var(--white);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-md);

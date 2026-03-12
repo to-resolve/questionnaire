@@ -4,6 +4,7 @@
     title="请输入问卷信息"
     width="500px"
     :close-on-click-modal="false"
+    append-to-body
     @close="handleDialogClose"
   >
     <el-form

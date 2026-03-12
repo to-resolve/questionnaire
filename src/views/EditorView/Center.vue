@@ -105,13 +105,15 @@ function dragstart() {
 
 <style scoped>
 .center-container {
-  width: 50%;
+  flex: 1;
+  max-width: 800px;
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-md);
-  margin: 70px auto;
+  margin: 0 auto;
   padding: 20px;
   background: var(--white);
   position: relative;
+  align-self: flex-start;
   .content {
     cursor: pointer;
     padding: 10px;

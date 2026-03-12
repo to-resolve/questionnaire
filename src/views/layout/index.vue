@@ -7,7 +7,7 @@
     <el-container direction="vertical" class="main-container">
       <!-- 顶栏 -->
       <el-header class="header">
-        <Header />
+        <Header :isEditor="isEditor" :id="editorId" />
       </el-header>
 
       <!-- 主内容 -->
@@ -19,8 +19,14 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
 import Header from '@/components/Common/Header.vue'
+
+const route = useRoute()
+const isEditor = computed(() => route.path.startsWith('/editor'))
+const editorId = computed(() => (route.params.id ? String(route.params.id) : undefined))
 </script>
 
 <style scoped>

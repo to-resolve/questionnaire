@@ -1,10 +1,33 @@
 <template>
   <div class="header-container">
     <div class="container flex self-start align-items-center border-box">
-      <!-- 中间区域 - 面包屑导航 -->
-      <div class="center flex align-items-center space-between pl-15 pr-15">
+      <!-- 左侧区域 - 面包屑导航 -->
+      <div class="left flex align-items-center pl-15 pr-15">
+        <div class="breadcrumb-wrapper">
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item
+              v-for="(item, index) in breadcrumbItems"
+              :key="index"
+              :to="item.path"
+            >
+              <el-icon v-if="item.icon" class="breadcrumb-icon">
+                <component :is="item.icon" />
+              </el-icon>
+              {{ item.title }}
+            </el-breadcrumb-item>
+          </el-breadcrumb>
+        </div>
+      </div>
+
+      <!-- 中间区域 - 功能按钮 -->
+      <div class="center flex align-items-center justify-content-center">
         <transition name="fade" mode="out-in">
+          <!-- 编辑页操作 -->
           <div v-if="isEditor" class="editor-actions">
+            <el-button type="info" size="small" @click="goBack" class="action-btn back-btn">
+              <el-icon class="btn-icon"><Back /></el-icon>
+              返回
+            </el-button>
             <div v-if="id" class="actions-group">
               <el-button
                 type="warning"
@@ -46,19 +69,38 @@
               预览问卷
             </el-button>
           </div>
-          <div v-else class="breadcrumb-wrapper">
-            <el-breadcrumb separator="/">
-              <el-breadcrumb-item
-                v-for="(item, index) in breadcrumbItems"
-                :key="index"
-                :to="item.path"
-              >
-                <el-icon v-if="item.icon" class="breadcrumb-icon">
-                  <component :is="item.icon" />
-                </el-icon>
-                {{ item.title }}
-              </el-breadcrumb-item>
-            </el-breadcrumb>
+
+          <!-- 预览页操作 -->
+          <div v-else-if="isPreview" class="preview-actions">
+            <el-button type="info" size="small" @click="goBack" class="action-btn">
+              返回
+            </el-button>
+            <el-button
+              type="success"
+              size="small"
+              @click="handlePreviewAction('genQuiz')"
+              class="action-btn"
+            >
+              <el-icon class="btn-icon"><Share /></el-icon>
+              生成在线问卷
+            </el-button>
+            <el-button
+              type="warning"
+              size="small"
+              @click="handlePreviewAction('genPDF')"
+              class="action-btn"
+            >
+              <el-icon class="btn-icon"><Printer /></el-icon>
+              生成本地PDF
+            </el-button>
+          </div>
+
+          <!-- AI 智能模式标识 -->
+          <div v-else-if="isAIView" class="ai-actions">
+            <el-tag type="success" effect="dark" class="ai-status-tag">
+              <el-icon><MagicStick /></el-icon>
+              AI 智能模式
+            </el-tag>
           </div>
         </transition>
       </div>
@@ -128,8 +170,9 @@
     </div>
 
     <SurveyInfoDialog
+      ref="surveyDialogRef"
       :store="store"
-      :is-preview="isPreview"
+      :is-preview="isSaveMode"
       v-model:visible="dialogVisible"
       @success="handleSaveSuccess"
     />
@@ -144,6 +187,7 @@ import {
   Setting,
   SwitchButton,
   ArrowDown,
+  Back,
   Refresh,
   Delete,
   FolderAdd,
@@ -154,12 +198,16 @@ import {
   Grid,
   Document,
   UserFilled,
+  MagicStick,
+  Printer,
+  Share,
 } from '@element-plus/icons-vue'
 
 import { useRouter, useRoute } from 'vue-router'
 const router = useRouter()
 const route = useRoute()
 
+import emitter from '@/utils/eventBus'
 import { update } from '@/utils/dboperate'
 import type { EditorStore } from '@/types'
 import SurveyInfoDialog from './SurveyInfoDialog.vue'
@@ -169,7 +217,8 @@ import { parseToken } from '@/utils/auth'
 
 const store = useEditorStore() as EditorStore
 
-const isPreview = ref(0) // 0：主页，1：预览，2：保存
+const surveyDialogRef = ref()
+const isSaveMode = ref(0) // 0：默认，1：预览，2：保存
 const dialogVisible = ref(false)
 const notificationCount = ref(3) // 模拟通知数量
 
@@ -191,34 +240,28 @@ const userInfo = ref({
   avatar: 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif',
 })
 
-// 面包屑数据
+// 页面状态判断
+const isAIView = computed(() => route.path.startsWith('/aiSurvey'))
+const isPreview = computed(() => route.path.startsWith('/preview'))
+
+// 面包屑数据 - 自动根据路由生成
 const breadcrumbItems = computed(() => {
-  const routeMap: Record<string, { title: string; icon?: any; path: string }[]> = {
-    '/home': [{ title: '首页', icon: House, path: '/home' }],
-    '/materials': [
-      { title: '首页', icon: House, path: '/home' },
-      { title: '组件市场', icon: Grid, path: '/materials' },
-    ],
-    '/editor': [
-      { title: '首页', icon: House, path: '/home' },
-      { title: '问卷编辑器', icon: Document, path: '/editor' },
-    ],
-    '/preview': [
-      { title: '首页', icon: House, path: '/home' },
-      { title: '问卷预览', icon: Document, path: '/preview' },
-    ],
-    '/personal': [
-      { title: '首页', icon: House, path: '/home' },
-      { title: '个人中心', icon: UserFilled, path: '/personal' },
-    ],
-  }
+  const matched = route.matched.filter((item) => item.meta && item.meta.title)
+  return matched.map((item) => {
+    let icon = null
+    if (item.path === '/home' || item.path === '/') icon = House
+    else if (item.path.startsWith('/materials')) icon = Grid
+    else if (item.path.startsWith('/editor')) icon = Document
+    else if (item.path.startsWith('/preview')) icon = View
+    else if (item.path.startsWith('/personal')) icon = UserFilled
+    else if (item.path.startsWith('/aiSurvey')) icon = MagicStick
 
-  const currentPath = route.path
-  // 处理带参数的路由
-  const basePath = currentPath.split('/')[1]
-  const fullPath = `/${basePath}`
-
-  return routeMap[fullPath] || [{ title: '首页', icon: House, path: '/home' }]
+    return {
+      title: item.meta.title as string,
+      path: item.path,
+      icon,
+    }
+  })
 })
 
 // 获取用户信息
@@ -234,18 +277,6 @@ const getUserInfo = async () => {
     console.error('获取用户信息失败:', error)
   }
 }
-
-// 页面标题（保留用于其他用途）
-const pageTitle = computed(() => {
-  const titles: Record<string, string> = {
-    '/home': '问卷星平台',
-    '/materials': '组件市场',
-    '/editor': '问卷编辑器',
-    '/preview': '问卷预览',
-    '/personal': '个人中心',
-  }
-  return titles[route.path] || '问卷管理系统'
-})
 
 const avatar = computed(() => userInfo.value.avatar)
 
@@ -289,8 +320,7 @@ function previewSurvey() {
         })
       } else {
         // 新建问卷
-        isPreview.value = 1
-        saveSurvey()
+        saveSurvey(1)
       }
     })
     .catch(() => {
@@ -299,8 +329,9 @@ function previewSurvey() {
 }
 
 // 保存问卷
-function saveSurvey() {
-  isPreview.value = 2
+function saveSurvey(mode: any = 2) {
+  isSaveMode.value = typeof mode === 'number' ? mode : 2
+  surveyDialogRef.value?.initFormData()
   dialogVisible.value = true
 }
 
@@ -309,6 +340,27 @@ function updateSurvey() {
   update(store, Number(props.id)).then(() => {
     ElMessage.success('问卷更新成功')
   })
+}
+
+// 返回操作
+function goBack() {
+  const fromPath = history.state?.from
+  const source = route.query.source
+
+  if (fromPath === 'home') {
+    router.push('/home')
+  } else if (source === 'ai') {
+    router.push('/aiSurvey')
+  } else if (isPreview.value && props.id) {
+    router.push(`/editor/${props.id}/survey-type`)
+  } else {
+    router.back()
+  }
+}
+
+// 转发预览页操作到页面组件
+function handlePreviewAction(action: string) {
+  emitter.emit('preview-action', action as any)
 }
 
 // 显示帮助文档
@@ -347,10 +399,6 @@ const handleCommand = (command: string) => {
 
 // 保存成功回调
 const handleSaveSuccess = () => {
-  if (isPreview.value === 1) {
-    // 预览模式下的保存
-    router.push('/home')
-  }
   dialogVisible.value = false
 }
 
@@ -372,14 +420,76 @@ onMounted(() => {
     height: 60px;
     max-width: 100%;
 
+    .left {
+      min-width: 200px;
+      height: 100%;
+      padding: 0 20px;
+      border-right: 1px solid var(--border-color);
+
+      .breadcrumb-wrapper {
+        display: flex;
+        align-items: center;
+
+        :deep(.el-breadcrumb) {
+          font-size: 14px;
+          white-space: nowrap;
+
+          .el-breadcrumb__item {
+            display: flex;
+            align-items: center;
+
+            .el-breadcrumb__inner {
+              display: flex;
+              align-items: center;
+              color: var(--font-color-light);
+              font-weight: 500;
+              transition: all 0.3s;
+
+              &:hover {
+                color: var(--primary-color);
+              }
+            }
+
+            .breadcrumb-icon {
+              margin-right: 6px;
+              font-size: 16px;
+            }
+          }
+
+          .el-breadcrumb__separator {
+            margin: 0 8px;
+            color: var(--font-color-lighter);
+          }
+        }
+      }
+    }
+
     .center {
       flex: 1;
       height: 100%;
-      border-left: 1px solid var(--border-color);
-      border-right: 1px solid var(--border-color);
       padding: 0 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
 
-      .editor-actions {
+      .ai-status-tag {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 16px;
+        height: 32px;
+        border-radius: 16px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        box-shadow: 0 4px 12px rgba(103, 194, 58, 0.2);
+
+        .el-icon {
+          font-size: 16px;
+        }
+      }
+
+      .editor-actions,
+      .preview-actions {
         display: flex;
         align-items: center;
         gap: 12px;
@@ -425,41 +535,12 @@ onMounted(() => {
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
           }
-        }
-      }
 
-      .breadcrumb-wrapper {
-        display: flex;
-        align-items: center;
-
-        :deep(.el-breadcrumb) {
-          font-size: 14px;
-
-          .el-breadcrumb__item {
-            display: flex;
-            align-items: center;
-
-            .el-breadcrumb__inner {
-              display: flex;
-              align-items: center;
-              color: var(--font-color-light);
-              font-weight: 500;
-              transition: all 0.3s;
-
-              &:hover {
-                color: var(--primary-color);
-              }
-            }
-
-            .breadcrumb-icon {
-              margin-right: 6px;
-              font-size: 16px;
-            }
-          }
-
-          .el-breadcrumb__separator {
-            margin: 0 8px;
-            color: var(--font-color-lighter);
+          &.back-btn:hover {
+            background-color: var(--info-color);
+            border-color: var(--info-color);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(144, 147, 153, 0.3);
           }
         }
       }
@@ -635,28 +716,30 @@ onMounted(() => {
 }
 
 // 响应式设计
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .header-container {
     .container {
+      .left {
+        min-width: auto;
+        padding: 0 10px;
+        .breadcrumb-wrapper {
+          :deep(.el-breadcrumb) {
+            .el-breadcrumb__item:not(:last-child) {
+              display: none;
+            }
+          }
+        }
+      }
       .center {
         .editor-actions {
+          gap: 6px;
           .action-btn {
-            padding: 6px 12px;
+            padding: 6px 10px;
             font-size: 12px;
 
             .btn-icon {
               margin-right: 4px;
               font-size: 12px;
-            }
-          }
-        }
-
-        .breadcrumb-wrapper {
-          :deep(.el-breadcrumb) {
-            font-size: 12px;
-
-            .breadcrumb-icon {
-              font-size: 14px;
             }
           }
         }

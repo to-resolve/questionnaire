@@ -1,14 +1,9 @@
 <template>
-  <div>
-    <div class="header">
-      <Header :isEditor="true" :id="id" />
-    </div>
-    <div class="container">
+  <div class="editor-view-container">
+    <div class="editor-main-content">
       <LeftSide />
-      <RightSide />
-    </div>
-    <div>
       <Center />
+      <RightSide />
     </div>
   </div>
 </template>
@@ -30,13 +25,13 @@ import { dispatchStatus } from '@/stores/dispatch'
 
 import { useEditorStore } from '@/stores/useEditor'
 const store = useEditorStore()
-store.initStore() // 先初始化一次状态，保证进入编辑器时有初始状态
 
 import { useRoute } from 'vue-router'
 const route = useRoute()
 
 // 如果有传递过来 id，就从数据库中获取数据来初始化仓库
 const id = computed(() => (route.params.id ? String(route.params.id) : undefined))
+
 if (id.value) {
   getSurveyListByUserId(parseToken(), Number(id.value)).then((res) => {
     if (res) {
@@ -45,7 +40,13 @@ if (id.value) {
       store.setStore(res.data[0])
     }
   })
+} else {
+  // 如果没有 id，且不是从 AI 页面导入的（即 query 中没有 source=ai），则进行初始化
+  if (route.query.source !== 'ai') {
+    store.initStore()
+  }
 }
+
 // 向子组件提供修改状态的方法
 const updateStatus: UpdateStatus = (
   configKey: string,
@@ -75,20 +76,22 @@ provide('getPicLink', getPicLink)
 </script>
 
 <style scoped lang="scss">
-.header {
+.editor-view-container {
   width: 100%;
-  background-color: var(--white);
-  position: fixed;
-  top: 0;
-  z-index: 10;
-}
-.container {
-  width: calc(100vw - 40px);
-  padding: 20px;
-  // Header的高度50px，上下padding 20px
-  height: calc(100vh - 50px - 40px);
+  height: 100%;
   background: url('@/assets/imgs/editor_background.png');
-  position: fixed;
-  top: 50px;
+  background-attachment: fixed;
+  background-size: cover;
+  overflow-y: auto;
+}
+
+.editor-main-content {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  min-height: 100%;
+  box-sizing: border-box;
+  gap: 20px;
+  position: relative;
 }
 </style>

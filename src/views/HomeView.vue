@@ -407,35 +407,6 @@ function getTableData() {
     }
   })
 }
-// const filteredTableData = computed(() => {
-//   let result = [...tableData.value]
-
-//   // 关键词搜索
-//   if (searchKeyword.value) {
-//     const keyword = searchKeyword.value.toLowerCase()
-//     result = result.filter(
-//       (item) =>
-//         item.title.toLowerCase().includes(keyword) ||
-//         (item.description && item.description.toLowerCase().includes(keyword)),
-//     )
-//   }
-
-//   // 状态筛选
-//   if (statusFilter.value !== '') {
-//     result = result.filter((item) => item.status.toString() === statusFilter.value)
-//   }
-
-//   // 日期范围筛选
-//   if (dateRange.value && dateRange.value.length === 2) {
-//     const [startDate, endDate] = dateRange.value
-//     result = result.filter((item) => {
-//       const itemDate = new Date(item.createTime)
-//       return itemDate >= new Date(startDate) && itemDate <= new Date(endDate)
-//     })
-//   }
-
-//   return result
-// })
 
 function getSurveyData() {
   getSurveyListByUserId(parseToken()).then((res) => {
@@ -447,7 +418,10 @@ function getSurveyData() {
 
 const goToEditor = () => {
   localStorage.setItem('activeView', 'editor')
-  router.push('/editor/survey-type')
+  router.push({
+    path: '/editor/survey-type',
+    state: { from: 'home' },
+  })
 }
 
 const goToComMarket = () => {
@@ -515,7 +489,10 @@ const viewSurvey = (surveyInfo: SurveyDBReturnData) => {
 }
 
 const editSurvey = (surveyInfo: SurveyDBReturnData) => {
-  router.push(`/editor/${surveyInfo.id}/survey-type`)
+  router.push({
+    path: `/editor/${surveyInfo.id}/survey-type`,
+    state: { from: 'home' },
+  })
 }
 
 const delSurvey = (surveyInfo: SurveyDBReturnData) => {

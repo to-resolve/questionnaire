@@ -57,10 +57,10 @@ const switchOutline = () => {
 <style scoped lang="scss">
 .left-side-container {
   width: 300px;
-  height: calc(100vh - 50px - 40px);
-  position: fixed;
-  left: 20px;
-  top: 70px;
+  height: calc(100vh - 60px - 40px);
+  position: sticky;
+  top: 20px;
+  flex-shrink: 0;
   background: var(--white);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-md);
