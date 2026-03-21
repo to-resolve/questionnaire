@@ -1,6 +1,24 @@
 import { ElMessage } from 'element-plus'
 import type { TypeStatus, OptionsStatus, EditorStore, MaterialStore } from '@/types'
 import { hasType, hasOptions, isOptionsStatusByIndexPayload, isPicLink } from '@/types'
+
+// 需要保存快照的操作类型
+const SNAPSHOT_ACTIONS = [
+  'type',
+  'title',
+  'desc',
+  'options',
+  'position',
+  'titleSize',
+  'descSize',
+  'titleItalic',
+  'descItalic',
+  'titleWeight',
+  'descWeight',
+  'titleColor',
+  'descColor',
+]
+
 export function setType(status: TypeStatus, payload: number) {
   if (payload !== status.type.currentStatus) {
     status.title.isShow = !status.title.isShow
@@ -17,6 +35,11 @@ export function setType(status: TypeStatus, payload: number) {
   }
 }
 
+// 检查是否需要保存快照
+function shouldSaveSnapshot(configKey: string): boolean {
+  return SNAPSHOT_ACTIONS.includes(configKey)
+}
+
 export function dispatchStatus(
   store: EditorStore | MaterialStore,
   status: TypeStatus | OptionsStatus,
@@ -24,6 +47,11 @@ export function dispatchStatus(
   payload?: number | string | boolean | object,
   isShowChange?: boolean,
 ) {
+  // 在修改前保存快照
+  if (shouldSaveSnapshot(configKey) && 'saveSnapshot' in store) {
+    store.saveSnapshot()
+  }
+
   switch (configKey) {
     case 'type':
       if (hasType(status)) {

@@ -132,42 +132,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, nextTick, watch } from 'vue'
+import { ref, nextTick, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { MagicStick, View, Check } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { useEditorStore } from '@/stores/useEditor'
 import { ElMessage } from 'element-plus'
-import { getAiSurvey } from '@/api/aiSurvey'
+import { getAiSurvey, type AiSurveyData } from '@/api/aiSurvey'
 import { defaultStatusMap } from '@/configs/defaultStatus/defaultStatusMap'
+import { useAiSurveyStore } from '@/stores/useAiSurvey'
 
 const router = useRouter()
 const editorStore = useEditorStore()
+
+// AI 聊天记录：放到 Pinia
+const aiSurveyStore = useAiSurveyStore()
+const { messages } = storeToRefs(aiSurveyStore)
 
 const prompt = ref('')
 const generating = ref(false)
 const activeStep = ref(0)
 const messageContainer = ref<HTMLElement | null>(null)
-
-interface Question {
-  title: string
-  type: string
-  options?: string[]
-}
-
-interface SurveyData {
-  title: string
-  description: string
-  questions: Question[]
-}
-
-interface Message {
-  role: 'user' | 'ai'
-  content?: string
-  status?: 'loading' | 'success' | 'error'
-  data?: SurveyData
-}
-
-const messages = ref<Message[]>([])
 
 const suggestions = [
   '帮我出一份关于员工福利满意度的调查表',
@@ -187,6 +172,13 @@ const scrollToBottom = async () => {
     })
   }
 }
+
+// 返回 AI 页重新挂载时：把已有聊天滚到底
+onMounted(() => {
+  if (messages.value.length > 0) {
+    scrollToBottom()
+  }
+})
 
 const useSuggestion = (tag: string) => {
   prompt.value = tag
@@ -222,15 +214,19 @@ const generateSurvey = async () => {
     if (res.code === 200) {
       // 更新最后一条 AI 消息
       const lastMsg = messages.value[messages.value.length - 1]
-      lastMsg.status = 'success'
-      lastMsg.data = res.data
+      if (lastMsg) {
+        lastMsg.status = 'success'
+        lastMsg.data = res.data as AiSurveyData
+      }
       activeStep.value = 3
     }
   } catch (error) {
     console.error('AI生成失败:', error)
     const lastMsg = messages.value[messages.value.length - 1]
-    lastMsg.status = 'error'
-    lastMsg.content = '抱歉，生成问卷时遇到了错误，请稍后再试。'
+    if (lastMsg) {
+      lastMsg.status = 'error'
+      lastMsg.content = '抱歉，生成问卷时遇到了错误，请稍后再试。'
+    }
   } finally {
     clearInterval(interval)
     generating.value = false
@@ -258,7 +254,7 @@ const typeMap: Record<string, string> = {
   note: 'text-note',
 }
 
-const importToEditor = (data: any) => {
+const importToEditor = (data: AiSurveyData) => {
   editorStore.initStore()
 
   if (editorStore.coms[0]?.status.title) {

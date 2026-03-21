@@ -28,6 +28,26 @@
               <el-icon class="btn-icon"><Back /></el-icon>
               返回
             </el-button>
+            <el-button
+              type="default"
+              size="small"
+              @click="handleUndo"
+              :disabled="!canUndo"
+              class="action-btn undo-btn"
+            >
+              <el-icon class="btn-icon"><ArrowLeft /></el-icon>
+              撤销
+            </el-button>
+            <el-button
+              type="default"
+              size="small"
+              @click="handleRedo"
+              :disabled="!canRedo"
+              class="action-btn redo-btn"
+            >
+              <el-icon class="btn-icon"><ArrowRight /></el-icon>
+              重做
+            </el-button>
             <div v-if="id" class="actions-group">
               <el-button
                 type="warning"
@@ -180,7 +200,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   User,
@@ -201,6 +221,8 @@ import {
   MagicStick,
   Printer,
   Share,
+  ArrowLeft,
+  ArrowRight,
 } from '@element-plus/icons-vue'
 
 import { useRouter, useRoute } from 'vue-router'
@@ -279,6 +301,39 @@ const getUserInfo = async () => {
 }
 
 const avatar = computed(() => userInfo.value.avatar)
+
+// 撤销/重做逻辑
+const canUndo = computed(() => store.undoStack.length > 0)
+const canRedo = computed(() => store.redoStack.length > 0)
+
+function handleUndo() {
+  if (canUndo.value) {
+    store.undo()
+  }
+}
+
+function handleRedo() {
+  if (canRedo.value) {
+    store.redo()
+  }
+}
+
+// 键盘快捷键处理
+function handleKeyDown(e: KeyboardEvent) {
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key === 'z' || e.key === 'Z') {
+      if (e.shiftKey) {
+        handleRedo()
+      } else {
+        handleUndo()
+      }
+      e.preventDefault()
+    } else if (e.key === 'y' || e.key === 'Y') {
+      handleRedo()
+      e.preventDefault()
+    }
+  }
+}
 
 // 重置问卷
 function resetSurvey() {
@@ -404,6 +459,11 @@ const handleSaveSuccess = () => {
 
 onMounted(() => {
   getUserInfo()
+  window.addEventListener('keydown', handleKeyDown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown)
 })
 </script>
 

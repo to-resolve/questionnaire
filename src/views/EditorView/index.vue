@@ -13,7 +13,6 @@ import { computed, provide } from 'vue'
 import { ElMessage } from 'element-plus'
 
 import { getSurveyListByUserId } from '@/api/questionnaire'
-import Header from '@/components/Common/Header.vue'
 import LeftSide from './LeftSide/Index.vue'
 import Center from './Center.vue'
 import RightSide from './RightSide.vue'

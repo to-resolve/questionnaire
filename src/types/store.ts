@@ -70,6 +70,11 @@ export interface EditorStore extends Actions {
   initStore: () => void
   removeCom: (index: number) => void
   resetComs: () => void
+  saveSnapshot: () => void
+  undo: () => void
+  redo: () => void
+  undoStack: any[]
+  redoStack: any[]
 }
 
 export type QuizData = {
