@@ -4,6 +4,9 @@ import Layout from '@/views/layout/index.vue'
 import Login from '@/views/Login/index.vue'
 import type { Material } from '@/types'
 import { useMaterialStore } from '@/stores/useMaterial'
+import { parseToken } from '@/utils/auth'
+import { getUserInfoByUserId } from '@/api/user'
+import { ElMessage } from 'element-plus'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -321,18 +324,45 @@ const router = createRouter({
           name: 'quiz',
           component: () => import('@/views/QuizView.vue'),
         },
+        {
+          path: '/user-management',
+          name: 'user-management',
+          component: () => import('@/views/UserManagement/index.vue'),
+          meta: { title: '用户管理', requiresAdmin: true },
+        },
       ],
     },
   ],
 })
 
-router.beforeEach((to, _, next) => {
+router.beforeEach(async (to, _, next) => {
   const activeView = localStorage.getItem('activeView')
   const store = useMaterialStore()
   if (activeView === 'materials' && to.name) {
     store.setCurrentSurveyCom(to.name as Material)
   }
-  next()
+
+  // 管理员权限校验
+  if (to.meta.requiresAdmin) {
+    const userId = parseToken()
+    if (userId) {
+      try {
+        const response = await getUserInfoByUserId(userId)
+        if (response && response.code === 200 && response.data.username === 'admin') {
+          next()
+        } else {
+          ElMessage.error('权限不足，仅管理员可访问')
+          next('/home')
+        }
+      } catch (error) {
+        next('/login')
+      }
+    } else {
+      next('/login')
+    }
+  } else {
+    next()
+  }
 })
 
 export default router

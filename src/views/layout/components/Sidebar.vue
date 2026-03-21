@@ -48,6 +48,11 @@
         <el-icon><User /></el-icon>
         <template #title>个人中心</template>
       </el-menu-item>
+
+      <el-menu-item index="/user-management" v-if="userInfo.username === 'admin'">
+        <el-icon><Setting /></el-icon>
+        <template #title>用户管理</template>
+      </el-menu-item>
     </el-menu>
 
     <div class="user-info" v-if="!isCollapse">
@@ -80,6 +85,7 @@ import {
   Tickets,
   User,
   MagicStick,
+  Setting,
 } from '@element-plus/icons-vue'
 import { getUserInfoByUserId } from '@/api/user'
 import { parseToken } from '@/utils/auth'
