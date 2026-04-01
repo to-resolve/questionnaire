@@ -37,6 +37,18 @@ const router = createRouter({
           meta: { title: '问卷管理' },
         },
         {
+          path: '/market',
+          name: 'market',
+          component: () => import('@/views/MarketView/index.vue'),
+          meta: { title: '问卷市场' },
+        },
+        {
+          path: '/analysis/:id',
+          name: 'analysis',
+          component: () => import('@/views/AnalysisView/index.vue'),
+          meta: { title: '问卷分析' },
+        },
+        {
           path: '/materials',
           name: 'materials',
           component: () => import('@/views/MaterialsView/Index.vue'),

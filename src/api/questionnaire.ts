@@ -35,3 +35,37 @@ export async function updateSurvey(param: updateSurveyData) {
   const data = await request.put('/survey', param)
   return data
 }
+
+// 获取所有已发布的问卷（市场）
+export async function getPublishedSurveyList(params: {
+  page: number
+  pageSize: number
+  title?: string
+}) {
+  const data = await request.get('/survey/all/published', params)
+  return data
+}
+
+// 获取问卷回答统计数据
+export async function getSurveyAnalysis(surveyId: number) {
+  const data = await request.get(`/survey/analysis/${surveyId}`)
+  return data
+}
+
+// 获取问卷提交详情列表
+export async function getSurveyAnswerList(surveyId: number) {
+  const data = await request.get(`/survey/answers/${surveyId}`)
+  return data
+}
+
+// 获取试卷信息
+export async function getQuiz(quizId: string | number) {
+  const data = await request.get(`/getQuiz/${quizId}`)
+  return data
+}
+
+// 提交答案
+export async function submitAnswers(quizId: string | number, answers: any) {
+  const data = await request.post('/submitAnswers', { quizId, answers })
+  return data
+}

@@ -19,10 +19,20 @@
         <template #title>首页</template>
       </el-menu-item>
 
-      <el-menu-item index="/materials">
-        <el-icon><Grid /></el-icon>
-        <template #title>组件市场</template>
-      </el-menu-item>
+      <el-sub-menu index="materials-market">
+        <template #title>
+          <el-icon><Grid /></el-icon>
+          <span>资源市场</span>
+        </template>
+        <el-menu-item index="/materials">
+          <el-icon><Briefcase /></el-icon>
+          <template #title>组件市场</template>
+        </el-menu-item>
+        <el-menu-item index="/market">
+          <el-icon><Shop /></el-icon>
+          <template #title>问卷市场</template>
+        </el-menu-item>
+      </el-sub-menu>
 
       <el-sub-menu index="questionnaire">
         <template #title>
@@ -86,12 +96,15 @@ import {
   User,
   MagicStick,
   Setting,
+  Shop,
+  Briefcase,
 } from '@element-plus/icons-vue'
 import { getUserInfoByUserId } from '@/api/user'
 import { parseToken } from '@/utils/auth'
 
 const route = useRoute()
-const isCollapse = ref(false)
+// 从 LocalStorage 读取初始状态，默认为 false
+const isCollapse = ref(localStorage.getItem('sidebarCollapse') === 'true')
 
 // 当前激活的路由
 const currentRoute = computed(() => {
@@ -117,6 +130,8 @@ const getUserInfo = async () => {
 
 const toggle = () => {
   isCollapse.value = !isCollapse.value
+  // 保存状态到 LocalStorage
+  localStorage.setItem('sidebarCollapse', isCollapse.value.toString())
 }
 
 onMounted(() => {

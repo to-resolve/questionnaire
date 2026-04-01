@@ -7,6 +7,7 @@ export interface updateSurveyData {
   coms?: string
   title?: string
   description?: string
+  status?: number
 }
 
 export interface addSurveyData {

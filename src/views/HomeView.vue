@@ -274,6 +274,24 @@
                   >
                     删除
                   </el-button>
+                  <el-button
+                    v-if="scope.row.status === 0"
+                    type="info"
+                    size="small"
+                    @click="publishSurvey(scope.row)"
+                    :icon="Promotion"
+                  >
+                    发布
+                  </el-button>
+                  <el-button
+                    v-if="scope.row.status === 1"
+                    type="info"
+                    size="small"
+                    @click="goToAnalysis(scope.row)"
+                    :icon="DataAnalysis"
+                  >
+                    统计
+                  </el-button>
                 </div>
               </template>
             </el-table-column>
@@ -330,6 +348,8 @@ import {
   EditPen,
   Delete,
   List,
+  Promotion,
+  DataAnalysis,
 } from '@element-plus/icons-vue'
 import SurveyInfoDialog from '@/components/Common/SurveyInfoDialog.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -339,7 +359,7 @@ import { useRouter } from 'vue-router'
 import type { SurveyDBData, SurveyDBReturnData } from '@/types'
 import type { TableColumnCtx } from 'element-plus'
 // axios
-import { getSurveyListByUserId, getSurveyPageListByUserId } from '@/api/questionnaire'
+import { getSurveyListByUserId, getSurveyPageListByUserId, updateSurvey } from '@/api/questionnaire'
 // 工具方法
 import { formatDate } from '@/utils'
 import { remove } from '@/utils/dboperate'
@@ -348,7 +368,7 @@ import { parseToken } from '@/utils/auth'
 const router = useRouter()
 
 const surveyDialogRef = ref()
-const tableData = ref<SurveyDBData[]>([])
+const tableData = ref<SurveyDBReturnData[]>([])
 const isPreview = ref(0) // 0：主页，1：预览，2：保存
 const dialogVisible = ref(false)
 const searchForm = reactive({
@@ -363,11 +383,11 @@ const defaultTime = ref<[Date, Date]>([
   new Date(2000, 2, 1, 23, 59, 59),
 ])
 const tableTotal = ref(0)
-const filteredTableData = ref<SurveyDBData[]>([])
+const filteredTableData = ref<SurveyDBReturnData[]>([])
 // const searchKeyword = ref('')
 // const statusFilter = ref('')
 // const dateRange = ref<[string, string] | []>([])
-const selectedRows = ref<SurveyDBData[]>([])
+const selectedRows = ref<SurveyDBReturnData[]>([])
 
 // 计算属性
 const publishedCount = computed(() => tableData.value.filter((item) => item.status === 1).length)
@@ -378,26 +398,27 @@ const totalQuestions = computed(() =>
   tableData.value.reduce((sum, item) => sum + item.surveyCount, 0),
 )
 
-const handleSizeChange = (val) => {
+const handleSizeChange = (val: number) => {
   searchForm.pageSize = val
   searchForm.page = 1
   getTableData()
 }
-const handleCurrentChange = (val) => {
+const handleCurrentChange = (val: number) => {
   searchForm.page = val
   getTableData()
 }
 function getTableData() {
+  let begin = null
+  let end = null
   if (Array.isArray(searchForm.creatTime)) {
-    searchForm.begin = searchForm.creatTime[0]
-    searchForm.end = searchForm.creatTime[1]
-  } else {
-    searchForm.begin = null
-    searchForm.end = null
+    begin = searchForm.creatTime[0]
+    end = searchForm.creatTime[1]
   }
   const params = {
     userId: parseToken(),
     ...searchForm,
+    begin,
+    end,
   }
   getSurveyPageListByUserId(params).then((res) => {
     if (res && res.code === 200) {
@@ -447,7 +468,7 @@ const resetFilters = () => {
   getTableData()
 }
 
-const handleSelectionChange = (selection: SurveyDBData[]) => {
+const handleSelectionChange = (selection: SurveyDBReturnData[]) => {
   selectedRows.value = selection
 }
 
@@ -502,6 +523,33 @@ const delSurvey = (surveyInfo: SurveyDBReturnData) => {
   })
 }
 
+const publishSurvey = (surveyInfo: SurveyDBReturnData) => {
+  ElMessageBox.confirm('确定要发布该问卷吗？发布后用户即可填写。', '发布确认', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'success',
+  }).then(() => {
+    updateSurvey({
+      id: surveyInfo.id,
+      userId: surveyInfo.userId,
+      status: 1,
+    }).then((res) => {
+      if (res && res.code === 200) {
+        ElMessage.success('发布成功')
+        getSurveyData()
+        getTableData()
+      }
+    })
+  })
+}
+
+const goToAnalysis = (surveyInfo: SurveyDBReturnData) => {
+  router.push({
+    name: 'analysis',
+    params: { id: surveyInfo.id },
+  })
+}
+
 // 定义 Dialog 回显数据
 const initDialogData = ref({
   id: 0,
@@ -527,8 +575,8 @@ const handleDialogSuccess = () => {
 }
 
 const statusFormatDate = (
-  row: SurveyDBData | null,
-  column: TableColumnCtx<SurveyDBData> | null,
+  row: SurveyDBReturnData | null,
+  column: TableColumnCtx<SurveyDBReturnData> | null,
   cellValue: number,
 ) => {
   return ['草稿', '已发布'][cellValue]
