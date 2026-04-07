@@ -19,7 +19,7 @@
                   </div>
                 </template>
                 <div class="chart-content">
-                  <div :id="'chart-' + index" class="echart-box"></div>
+                  <div :ref="(el) => setChartRef(el, index)" class="echart-box"></div>
                   <div class="chart-table">
                     <el-table :data="item.options" size="small" border stripe>
                       <el-table-column prop="label" label="选项" />
@@ -40,14 +40,14 @@
       </el-tab-pane>
 
       <el-tab-pane label="答卷详情" name="details">
-        <el-table :data="answerList" border stripe v-loading="loading">
+        <el-table :data="answerList" border stripe v-loading="loading" style="width: 100%">
           <el-table-column type="index" label="序号" width="60" align="center" />
           <el-table-column prop="submitTime" label="提交时间" width="180">
             <template #default="{ row }">
               {{ formatDate(row.submitTime) }}
             </template>
           </el-table-column>
-          <el-table-column prop="ip" label="来源IP" width="140" />
+          <el-table-column prop="ip" label="来源IP" />
           <el-table-column label="操作" width="100" align="center">
             <template #default="{ row }">
               <el-button type="primary" link @click="viewDetail(row)">查看详情</el-button>
@@ -71,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import { getSurveyListByUserId, getSurveyAnalysis, getSurveyAnswerList } from '@/api/questionnaire'
@@ -92,6 +92,16 @@ const answerList = ref<any[]>([])
 const detailVisible = ref(false)
 const currentAnswer = ref<any>(null)
 
+const chartInstances: any[] = []
+const chartRefs: (HTMLElement | null)[] = []
+
+const setChartRef = (el: any, index: number) => {
+  if (el) {
+    chartRefs[index] = el
+    console.log(`设置图表${index}的ref:`, el)
+  }
+}
+
 const fetchSurveyInfo = async () => {
   const userId = parseToken()
   if (userId) {
@@ -109,7 +119,8 @@ const fetchAnalysisData = async () => {
     if (res && res.code === 200) {
       analysisData.value = res.data
       await nextTick()
-      initCharts()
+      // 再延迟一下确保DOM完全渲染
+      setTimeout(initCharts, 100)
     }
   } catch (error) {
     // 模拟数据用于演示，因为后端可能还没实现
@@ -136,7 +147,7 @@ const fetchAnalysisData = async () => {
       },
     ]
     await nextTick()
-    initCharts()
+    setTimeout(initCharts, 100)
   } finally {
     loading.value = false
   }
@@ -173,10 +184,24 @@ const fetchAnswerList = async () => {
 }
 
 const initCharts = () => {
+  console.log('开始初始化图表，数据数量:', analysisData.value.length)
+  console.log('chartRefs数组:', chartRefs)
+
+  // 先销毁之前的实例
+  chartInstances.forEach((chart) => {
+    if (chart) chart.dispose()
+  })
+  chartInstances.length = 0
+
   analysisData.value.forEach((item, index) => {
-    const chartDom = document.getElementById('chart-' + index)
+    const chartDom = chartRefs[index]
+    console.log(`图表${index}元素:`, chartDom)
     if (chartDom) {
       const myChart = echarts.init(chartDom)
+      chartInstances.push(myChart)
+
+      console.log(`图表${index}数据:`, item.options)
+
       const option = {
         tooltip: {
           trigger: 'item',
@@ -207,20 +232,127 @@ const initCharts = () => {
         ],
       }
       myChart.setOption(option)
+      console.log(`图表${index}初始化完成`)
     }
   })
 }
 
-const viewDetail = (row: any) => {
-  currentAnswer.value = row
-  detailVisible.value = true
+const handleResize = () => {
+  chartInstances.forEach((chart) => {
+    if (chart) chart.resize()
+  })
 }
 
 onMounted(() => {
   fetchSurveyInfo()
   fetchAnalysisData()
   fetchAnswerList()
+  window.addEventListener('resize', handleResize)
 })
+
+onUnmounted(() => {
+  chartInstances.forEach((chart) => {
+    if (chart) chart.dispose()
+  })
+  window.removeEventListener('resize', handleResize)
+})
+
+const viewDetail = async (row: any) => {
+  try {
+    // 首先获取问卷的组件信息来解析答案
+    if (!surveyInfo.value) {
+      await fetchSurveyInfo()
+    }
+
+    if (surveyInfo.value?.coms) {
+      const components = JSON.parse(surveyInfo.value.coms)
+      const answersData = JSON.parse(row.answerData)
+
+      // 先构建输入组件的索引映射
+      const inputIndexMap = new Map()
+      let inputIndex = 0
+      components.forEach((component: any, idx: number) => {
+        const name = component.name
+        if (name !== 'text-note') {
+          inputIndex++
+          inputIndexMap.set(idx, inputIndex)
+        }
+      })
+
+      const parsedAnswers: any[] = []
+
+      components.forEach((component: any, componentIdx: number) => {
+        const name = component.name
+
+        // 只处理有输入的组件
+        if (name === 'text-note') return
+
+        const answerKeyNum = inputIndexMap.get(componentIdx)
+        const answerKey = answerKeyNum ? String(answerKeyNum) : null
+        if (!answerKey) return
+
+        const status = component.status || {}
+        const titleObj = status.title || {}
+        const title = titleObj.status || '未知问题'
+
+        const value = answersData[answerKey]
+
+        if (value !== undefined && value !== null && value !== '') {
+          // 处理多选题
+          if (name === 'checkbox' || name === 'multi-select') {
+            const optionsObj = status.options || {}
+            const options = optionsObj.status || []
+            if (Array.isArray(value)) {
+              // 多选答案可能是文字，也可能是索引
+              const labels = value.map((v: any) => {
+                if (options.includes(v)) {
+                  return v
+                }
+                const idx = Number(v)
+                return !isNaN(idx) && options[idx] ? options[idx] : v
+              })
+              parsedAnswers.push({ title, value: labels })
+            } else {
+              parsedAnswers.push({ title, value })
+            }
+          } else if (name === 'rate' || name === 'rate-score') {
+            parsedAnswers.push({ title, value: value + '分' })
+          } else if (
+            name === 'radio' ||
+            name === 'radio-select' ||
+            name === 'select' ||
+            name === 'dropdown'
+          ) {
+            const optionsObj = status.options || {}
+            const options = optionsObj.status || []
+            // 单选答案可能是文字，也可能是索引
+            let label = value
+            if (!options.includes(value)) {
+              const idx = Number(value)
+              if (!isNaN(idx) && options[idx]) {
+                label = options[idx]
+              }
+            }
+            parsedAnswers.push({ title, value: label })
+          } else {
+            parsedAnswers.push({ title, value })
+          }
+        }
+      })
+
+      currentAnswer.value = {
+        ...row,
+        answers: parsedAnswers,
+      }
+    } else {
+      currentAnswer.value = row
+    }
+  } catch (e) {
+    console.error('解析答卷详情失败', e)
+    currentAnswer.value = row
+  }
+  detailVisible.value = true
+}
 </script>
 
 <style scoped lang="scss">

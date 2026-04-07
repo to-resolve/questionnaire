@@ -35,7 +35,10 @@
             <template #header>
               <div class="card-header">
                 <span class="survey-title">{{ survey.title }}</span>
-                <el-tag size="small" type="success">已发布</el-tag>
+                <div class="tag-group">
+                  <el-tag size="small" type="success">已发布</el-tag>
+                  <el-tag v-if="isParticipated(survey.id)" size="small" type="info">已参与</el-tag>
+                </div>
               </div>
             </template>
             <div class="card-content">
@@ -52,8 +55,12 @@
               </div>
             </div>
             <div class="card-actions">
-              <el-button type="primary" plain @click="participateSurvey(survey.id)">
-                参与调研
+              <el-button
+                :type="isParticipated(survey.id) ? 'info' : 'primary'"
+                plain
+                @click="participateSurvey(survey.id)"
+              >
+                {{ isParticipated(survey.id) ? '查看问卷' : '参与调研' }}
               </el-button>
             </div>
           </el-card>
@@ -88,12 +95,17 @@ const router = useRouter()
 const loading = ref(false)
 const searchKeyword = ref('')
 const publishedSurveys = ref<SurveyDBReturnData[]>([])
+const participatedSurveyIds = ref<number[]>([])
 const total = ref(0)
 
 const pageParams = reactive({
   page: 1,
   pageSize: 8,
 })
+
+const isParticipated = (surveyId: number | string): boolean => {
+  return participatedSurveyIds.value.includes(Number(surveyId))
+}
 
 const fetchPublishedSurveys = async () => {
   loading.value = true
@@ -104,14 +116,15 @@ const fetchPublishedSurveys = async () => {
     }
     const res = await getPublishedSurveyList(params)
     if (res && res.code === 200) {
-      // 假设后端返回格式为 { rows: [], total: 0 }
-      // 如果后端还没改，兼容一下直接返回数组的情况
+      // 后端返回格式为 { rows: [], total: 0, participatedSurveyIds: [] }
       if (Array.isArray(res.data)) {
         publishedSurveys.value = res.data
         total.value = res.data.length
+        participatedSurveyIds.value = []
       } else {
         publishedSurveys.value = res.data.rows
         total.value = res.data.total
+        participatedSurveyIds.value = res.data.participatedSurveyIds || []
       }
     }
   } catch (error) {
@@ -215,6 +228,11 @@ onMounted(() => {
           overflow: hidden;
           text-overflow: ellipsis;
           max-width: 150px;
+        }
+
+        .tag-group {
+          display: flex;
+          gap: 5px;
         }
       }
 
