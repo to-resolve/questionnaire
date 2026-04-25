@@ -33,8 +33,8 @@
                   <el-icon><Monitor /></el-icon>
                 </div>
                 <div class="text">
-                  <h4>全平台支持</h4>
-                  <p>移动端、PC端、小程序全面覆盖</p>
+                  <h4>快捷制作问卷</h4>
+                  <p>AI智能建卷，一键导入</p>
                 </div>
               </div>
             </div>
@@ -124,6 +124,7 @@ import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { User, Lock, Document, CircleCheckFilled, Monitor } from '@element-plus/icons-vue'
+import { registerUser } from '../../api/user'
 
 const router = useRouter()
 const registerFormRef = ref()
@@ -163,12 +164,20 @@ const handleRegister = async () => {
     const valid = await registerFormRef.value.validate()
     if (valid) {
       isLoading.value = true
-      // 模拟注册逻辑
-      setTimeout(() => {
-        isLoading.value = false
+      try {
+        await registerUser({
+          username: registerForm.username,
+          password: registerForm.password,
+        })
         ElMessage.success('注册成功！正在跳转至登录页...')
-        router.push('/login')
-      }, 1500)
+        setTimeout(() => {
+          router.push('/login')
+        }, 1500)
+      } catch (error: any) {
+        ElMessage.error(error.message || '注册失败，请稍后重试')
+      } finally {
+        isLoading.value = false
+      }
     }
   } catch (error) {
     console.error('Validation failed:', error)

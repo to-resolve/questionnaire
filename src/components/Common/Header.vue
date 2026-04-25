@@ -775,6 +775,21 @@ onUnmounted(() => {
   }
 }
 
+/* 打印样式 */
+@media print {
+  .header-container {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+  }
+}
+
 // 响应式设计
 @media (max-width: 1024px) {
   .header-container {

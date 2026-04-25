@@ -2,7 +2,7 @@
   <div ref="preview-container" class="preview-container pb-40 pt-20">
     <div class="center mc">
       <div class="content-group no-border">
-        <div class="info-bar flex justify-content-end mb-10 no-print">
+        <div class="info-bar flex justify-content-between mb-10 no-print">
           <el-text class="mx-1">题目数量：{{ store.surveyCount }}</el-text>
         </div>
         <div class="content mb-10" v-for="(com, index) in store.coms" :key="index">
@@ -27,6 +27,8 @@ import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 const router = useRouter()
 const route = useRoute()
+// 图标
+import { ArrowLeft } from '@element-plus/icons-vue'
 // 仓库
 import { useEditorStore } from '@/stores/useEditor'
 const store = useEditorStore()
@@ -43,12 +45,21 @@ import emitter from '@/utils/eventBus'
 
 // 获取路由参数
 const id = Number(route.params.id)
+const autoPrint = route.query.autoPrint === 'true'
+
 if (id) {
   getSurveyListByUserId(parseToken(), id).then((res) => {
     if (res) {
       const newComs = restoreComponentStatus(JSON.parse(res.data[0].coms))
       res.data[0].coms = newComs
       store.setStore(res.data[0])
+
+      // 如果是自动打印模式，等待页面加载后触发
+      if (autoPrint) {
+        setTimeout(() => {
+          genPDF()
+        }, 1000)
+      }
     }
   })
 }
@@ -93,8 +104,63 @@ function genPDF() {
     })
     return
   }
-  // 生成PDF之前需要检查
+
+  // 动态添加隐藏Vue DevTools的样式
+  const style = document.createElement('style')
+  style.textContent = `
+    @media print {
+      /* 隐藏所有固定定位的元素 */
+      [style*="position: fixed"],
+      [style*="position:fixed"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        max-height: 0 !important;
+        max-width: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        left: -9999px !important;
+        top: -9999px !important;
+      }
+
+      /* Vue DevTools特定隐藏 */
+      #__vue-devtools-container__,
+      #__vue-devtools-iframe__,
+      [id*="vue-devtools"],
+      [class*="vue-devtools"],
+      .vue-devtools {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        max-height: 0 !important;
+        max-width: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        left: -9999px !important;
+        top: -9999px !important;
+      }
+
+      /* 隐藏所有可能的浮动元素 */
+      [style*="z-index: 9999"],
+      [style*="z-index:9999"],
+      [style*="z-index: 9998"],
+      [style*="z-index:9998"] {
+        display: none !important;
+      }
+    }
+  `
+  document.head.appendChild(style)
+
   window.print()
+
+  // 打印后移除临时样式
+  setTimeout(() => {
+    document.head.removeChild(style)
+  }, 100)
 }
 
 const dialogVisible = ref(false) // 控制弹窗
@@ -147,13 +213,120 @@ function copyLink() {
   background: var(--white);
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
 }
+</style>
+
+<style>
 @media print {
-  .no-print {
-    display: none;
+  /* 最彻底的隐藏方式 */
+  .el-aside,
+  .el-header,
+  .aside,
+  .header,
+  .no-print,
+  .el-menu,
+  .logo,
+  .user-info,
+  .collapse-btn,
+  .el-menu-item,
+  .el-sub-menu {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    max-height: 0 !important;
+    max-width: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
   }
+
   .no-border {
-    border: none;
-    box-shadow: none;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* 重置布局容器 */
+  .layout,
+  .app-container,
+  .main-container,
+  .main,
+  .el-container,
+  .el-main {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    flex: none !important;
+  }
+
+  /* 预览容器 */
+  .preview-container {
+    background: white !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    display: block !important;
+    min-height: auto !important;
+  }
+
+  /* 中心容器 */
+  .center,
+  .mc {
+    width: 800px !important;
+    max-width: 800px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    display: block !important;
+    float: none !important;
+    position: relative !important;
+  }
+
+  /* 内容组 */
+  .content-group {
+    width: 100% !important;
+    padding: 20px !important;
+    margin: 0 !important;
+  }
+
+  /* 题目内容 */
+  .content {
+    width: 100% !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* 页面设置 */
+  @page {
+    margin: 15mm;
+    size: A4 portrait;
+  }
+
+  /* 确保html和body正确 */
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* 确保正确盒模型 */
+  * {
+    box-sizing: border-box !important;
+  }
+
+  /* 确保main容器完全展开 */
+  :deep(.el-main) {
+    width: 100% !important;
+    padding: 0 !important;
   }
 }
 </style>

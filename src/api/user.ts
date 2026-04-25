@@ -29,3 +29,9 @@ export async function deleteUser(userId: number) {
   const data = await request.delete(`/user/${userId}`)
   return data
 }
+
+// 用户注册
+export async function registerUser(param: { username: string; password: string }) {
+  const data = await request.post('/register', param)
+  return data
+}

@@ -1,7 +1,7 @@
 <template>
   <el-aside :width="isCollapse ? '64px' : '220px'" class="aside">
     <div class="logo">
-      <span v-if="!isCollapse">问卷管理系统</span>
+      <span v-if="!isCollapse">易问卷平台</span>
       <span v-else>问卷</span>
     </div>
 
@@ -220,5 +220,20 @@ onMounted(() => {
 .collapse-btn:hover {
   background-color: #f5f7fa;
   color: #409eff;
+}
+
+/* 打印样式 */
+@media print {
+  .aside {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+  }
 }
 </style>

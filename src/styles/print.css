@@ -1,0 +1,139 @@
+/* 全局打印样式 - 确保只打印问卷内容 */
+@media print {
+  /* 隐藏所有不需要的元素 */
+  .el-aside,
+  .el-header,
+  .aside,
+  .header,
+  .no-print,
+  .el-menu,
+  .logo,
+  .user-info,
+  .collapse-btn,
+  .el-menu-item,
+  .el-sub-menu,
+  .header-container,
+  /* Vue DevTools */
+  #__vue-devtools-container__,
+  #__vue-devtools-iframe__,
+  [id*="vue-devtools"],
+  [class*="vue-devtools"],
+  /* 其他调试工具 */
+  .v-tooltip,
+  .debug,
+  [style*="z-index: 9999"],
+  [style*="z-index:9999"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    max-height: 0 !important;
+    max-width: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+  }
+
+  /* 隐藏所有fixed定位的元素（Vue DevTools等） */
+  [style*='position: fixed'],
+  [style*='position:fixed'] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    max-height: 0 !important;
+    max-width: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+  }
+
+  /* 重置布局 */
+  body,
+  html,
+  #app {
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 重置容器 */
+  .layout,
+  .app-container,
+  .main-container,
+  .main,
+  .el-container,
+  .el-main {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    flex: none !important;
+  }
+
+  /* 问卷内容样式 */
+  .preview-container {
+    background: white !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    display: block !important;
+    min-height: auto !important;
+  }
+
+  .center,
+  .mc {
+    width: 800px !important;
+    max-width: 800px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    display: block !important;
+    float: none !important;
+    position: relative !important;
+  }
+
+  .content-group {
+    width: 100% !important;
+    padding: 20px !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .content {
+    width: 100% !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* 页面设置 - 隐藏页眉页脚 */
+  @page {
+    margin: 0;
+    size: A4 portrait;
+  }
+
+  /* 内容区域边距 */
+  .center,
+  .mc {
+    margin-top: 15mm !important;
+    margin-bottom: 15mm !important;
+  }
+
+  /* 盒模型 */
+  * {
+    box-sizing: border-box !important;
+  }
+}

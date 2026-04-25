@@ -15,7 +15,7 @@
             <div class="logo-wrapper">
               <el-icon class="floating-icon"><Document /></el-icon>
             </div>
-            <h1 class="brand-name">问卷星平台</h1>
+            <h1 class="brand-name">易问卷平台</h1>
             <p class="brand-slogan">专业 · 高效 · 智能</p>
 
             <div class="feature-list">

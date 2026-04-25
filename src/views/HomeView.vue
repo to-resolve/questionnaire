@@ -239,59 +239,73 @@
               </template>
             </el-table-column>
 
-            <el-table-column fixed="right" label="操作" width="400" align="center">
+            <el-table-column fixed="right" label="操作" width="480" align="center">
               <template #default="scope">
                 <div class="operation-buttons">
-                  <el-button
-                    type="primary"
-                    size="small"
-                    @click="viewSurvey(scope.row)"
-                    :icon="View"
-                  >
-                    预览
-                  </el-button>
-                  <el-button
-                    type="success"
-                    size="small"
-                    @click="editSurveyTitle(scope.row)"
-                    :icon="EditPen"
-                  >
-                    编辑信息
-                  </el-button>
-                  <el-button
-                    type="warning"
-                    size="small"
-                    @click="editSurvey(scope.row)"
-                    :icon="Edit"
-                  >
-                    设计问卷
-                  </el-button>
-                  <el-button
-                    type="danger"
-                    size="small"
-                    @click="delSurvey(scope.row)"
-                    :icon="Delete"
-                  >
-                    删除
-                  </el-button>
-                  <el-button
-                    v-if="scope.row.status === 0"
-                    type="info"
-                    size="small"
-                    @click="publishSurvey(scope.row)"
-                    :icon="Promotion"
-                  >
-                    发布
-                  </el-button>
-                  <el-button
-                    v-if="scope.row.status === 1"
-                    type="info"
-                    size="small"
-                    @click="goToAnalysis(scope.row)"
-                    :icon="DataAnalysis"
-                  >
-                    统计
-                  </el-button>
+                  <div class="top-buttons">
+                    <el-button
+                      type="primary"
+                      size="small"
+                      @click="viewSurvey(scope.row)"
+                      :icon="View"
+                    >
+                      预览
+                    </el-button>
+                    <el-button
+                      type="success"
+                      size="small"
+                      @click="editSurveyTitle(scope.row)"
+                      :icon="EditPen"
+                    >
+                      编辑信息
+                    </el-button>
+                    <el-button
+                      type="warning"
+                      size="small"
+                      @click="editSurvey(scope.row)"
+                      :icon="Edit"
+                    >
+                      设计问卷
+                    </el-button>
+                    <el-button
+                      type="danger"
+                      size="small"
+                      @click="delSurvey(scope.row)"
+                      :icon="Delete"
+                    >
+                      删除
+                    </el-button>
+                  </div>
+                  <div class="bottom-buttons">
+                    <el-button
+                      v-if="scope.row.status === 0"
+                      type="info"
+                      size="small"
+                      @click="publishSurvey(scope.row)"
+                      :icon="Promotion"
+                    >
+                      发布
+                    </el-button>
+                    <el-button
+                      v-if="scope.row.status === 1"
+                      type="info"
+                      size="small"
+                      @click="goToAnalysis(scope.row)"
+                      :icon="DataAnalysis"
+                    >
+                      统计
+                    </el-button>
+                    <el-button
+                      type="primary"
+                      plain
+                      size="small"
+                      @click="exportToPDF(scope.row)"
+                      :icon="Download"
+                      class="export-button"
+                    >
+                      导出
+                    </el-button>
+                  </div>
                 </div>
               </template>
             </el-table-column>
@@ -350,6 +364,7 @@ import {
   List,
   Promotion,
   DataAnalysis,
+  Download,
 } from '@element-plus/icons-vue'
 import SurveyInfoDialog from '@/components/Common/SurveyInfoDialog.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -492,13 +507,49 @@ const batchDelete = () => {
   })
 }
 
+const exportToPDF = (surveyInfo: SurveyDBReturnData) => {
+  // 在当前标签页跳转到预览页面，添加自动打印参数
+  router.push({
+    path: `/preview/${surveyInfo.id}`,
+    query: { autoPrint: 'true' },
+    state: { from: 'home' },
+  })
+}
+
 const batchExport = () => {
   if (selectedRows.value.length === 0) {
     ElMessage.warning('请先选择要导出的问卷')
     return
   }
-  // 导出逻辑待实现
-  ElMessage.info('批量导出功能开发中')
+
+  ElMessageBox.confirm(
+    `确定要导出选中的 ${selectedRows.value.length} 份问卷吗？\n\n将依次打开每个问卷的打印对话框，请选择"另存为PDF"。`,
+    '批量导出确认',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'info',
+    },
+  ).then(() => {
+    // 逐个导出问卷
+    let currentIndex = 0
+
+    const exportNext = () => {
+      if (currentIndex >= selectedRows.value.length) {
+        ElMessage.success('所有问卷导出请求已发送')
+        return
+      }
+
+      const survey = selectedRows.value[currentIndex]
+      exportToPDF(survey)
+      currentIndex++
+
+      // 延迟处理下一个，避免浏览器阻止多个弹窗
+      setTimeout(exportNext, 2000)
+    }
+
+    exportNext()
+  })
 }
 
 const viewSurvey = (surveyInfo: SurveyDBReturnData) => {
@@ -903,9 +954,17 @@ onMounted(() => {
 
               .operation-buttons {
                 display: flex;
-                gap: 8px;
+                flex-direction: column;
+                gap: 6px;
                 justify-content: center;
-                flex-wrap: wrap;
+                align-items: center;
+
+                .top-buttons,
+                .bottom-buttons {
+                  display: flex;
+                  gap: 6px;
+                  justify-content: center;
+                }
 
                 .el-button {
                   margin: 0;

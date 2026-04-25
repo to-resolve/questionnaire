@@ -37,6 +37,47 @@ const editorId = computed(() => (route.params.id ? String(route.params.id) : und
   overflow: hidden;
 }
 
+/* 打印样式 */
+@media print {
+  .layout {
+    min-width: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* 完全隐藏侧边栏和头部 */
+  .aside,
+  .header,
+  .el-aside,
+  .el-header {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+  }
+
+  /* 调整主容器布局 */
+  .main-container {
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .el-container {
+    height: auto !important;
+  }
+
+  .main {
+    height: auto !important;
+    overflow: visible !important;
+  }
+}
+
 .el-container {
   height: 100%;
   width: 100%;
