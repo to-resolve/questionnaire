@@ -7,20 +7,22 @@
       <RouterView v-slot="{ Component }">
         <component
           :is="Component"
-          :status="store.coms[store.currentMaterialCom].status"
+          :status="currentCom.status"
           :serialNum="1"
+          :key="store.currentMaterialCom"
         />
       </RouterView>
     </div>
     <div class="right">
-      <EditPannel :com="currentCom" />
+      <EditPannel :com="currentCom" :key="store.currentMaterialCom" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, provide } from 'vue'
+import { computed, provide, watch } from 'vue'
 import EditPannel from '@/components/SurveyComs/EditItems/EditPannel.vue'
+import { useRoute } from 'vue-router'
 // 类型
 import type {
   MaterialStore,
@@ -29,6 +31,7 @@ import type {
   OptionsStatus,
   GetLink,
   PicLink,
+  Material,
 } from '@/types'
 // 仓库
 import { useMaterialStore } from '@/stores/useMaterial'
@@ -36,7 +39,20 @@ import { useMaterialStore } from '@/stores/useMaterial'
 import { dispatchStatus } from '@/stores/dispatch'
 
 const store = useMaterialStore() as unknown as MaterialStore
+const route = useRoute()
+
 const currentCom = computed(() => store.coms[store.currentMaterialCom])
+
+// 监听路由变化，更新当前组件
+watch(
+  () => route.name,
+  (newName) => {
+    if (newName) {
+      store.setCurrentSurveyCom(newName as Material)
+    }
+  },
+  { immediate: true },
+)
 
 // 右侧编辑面板的父组件提供修改状态的方法
 const updateStatus: UpdateStatus = (
