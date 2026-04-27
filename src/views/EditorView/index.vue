@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, provide } from 'vue'
+import { computed, provide, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 
 import { getSurveyListByUserId } from '@/api/questionnaire'
@@ -18,7 +18,7 @@ import Center from './Center.vue'
 import RightSide from './RightSide.vue'
 import { restoreComponentStatus } from '@/utils'
 import { parseToken } from '@/utils/auth'
-import type { UpdateStatus, TypeStatus, OptionsStatus, GetLink, PicLink } from '@/types'
+import type { UpdateStatus, TypeStatus, OptionsStatus, GetLink, PicLink, Status } from '@/types'
 // 数据仓库更新方法
 import { dispatchStatus } from '@/stores/dispatch'
 
@@ -28,23 +28,91 @@ const store = useEditorStore()
 import { useRoute } from 'vue-router'
 const route = useRoute()
 
+// 检查是否有导入的问卷数据
+const checkImportData = () => {
+  const importDataStr = localStorage.getItem('importSurveyData')
+  if (importDataStr) {
+    try {
+      const importData = JSON.parse(importDataStr)
+      if (importData.coms && importData.coms.length > 0) {
+        const newComs = restoreComponentStatus(importData.coms as Status[])
+        // 直接设置 store 的属性
+        store.coms = newComs
+        store.surveyCount = newComs.filter((com) => {
+          const surveyNames = [
+            'single-select',
+            'multi-select',
+            'single-text',
+            'multi-text',
+            'option-select',
+            'rate',
+            'upload',
+            'time-picker',
+            'personal-info-name',
+            'personal-info-id',
+            'personal-info-tel',
+            'personal-info-wechat',
+            'personal-info-qq',
+            'personal-info-email',
+            'personal-info-address',
+            'personal-info-gender',
+            'personal-info-age',
+            'personal-info-education',
+            'personal-info-career',
+            'personal-info-birth',
+            'personal-info-collage',
+            'personal-info-major',
+            'personal-info-industry',
+            'personal-info-company',
+            'personal-info-position',
+          ]
+          return surveyNames.includes(com.name)
+        }).length
+        store.currentComponentIndex = -1
+        localStorage.removeItem('importSurveyData')
+        // 保存标题和描述到 localStorage，以便在信息编辑时使用
+        if (importData.title || importData.description) {
+          localStorage.setItem(
+            'importSurveyInfo',
+            JSON.stringify({
+              title: importData.title || '',
+              description: importData.description || '',
+            }),
+          )
+        }
+        ElMessage.success('问卷导入成功！请在编辑信息中设置标题和描述')
+        return true
+      }
+    } catch (e) {
+      console.error('解析导入数据失败:', e)
+    }
+  }
+  return false
+}
+
 // 如果有传递过来 id，就从数据库中获取数据来初始化仓库
 const id = computed(() => (route.params.id ? String(route.params.id) : undefined))
 
-if (id.value) {
-  getSurveyListByUserId(parseToken(), Number(id.value)).then((res) => {
-    if (res) {
-      const newComs = restoreComponentStatus(JSON.parse(res.data[0].coms))
-      res.data[0].coms = newComs
-      store.setStore(res.data[0])
+onMounted(() => {
+  if (id.value) {
+    getSurveyListByUserId(parseToken(), Number(id.value)).then((res) => {
+      if (res) {
+        const newComs = restoreComponentStatus(JSON.parse(res.data[0].coms))
+        res.data[0].coms = newComs
+        store.setStore(res.data[0])
+      }
+    })
+  } else {
+    // 首先检查是否有导入数据
+    const hasImported = checkImportData()
+    if (!hasImported) {
+      // 如果没有 id，且不是从 AI 页面导入的（即 query 中没有 source=ai），则进行初始化
+      if (route.query.source !== 'ai') {
+        store.initStore()
+      }
     }
-  })
-} else {
-  // 如果没有 id，且不是从 AI 页面导入的（即 query 中没有 source=ai），则进行初始化
-  if (route.query.source !== 'ai') {
-    store.initStore()
   }
-}
+})
 
 // 向子组件提供修改状态的方法
 const updateStatus: UpdateStatus = (

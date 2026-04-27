@@ -37,13 +37,16 @@ export function handleScroll(event: WheelEvent) {
 // 将时间戳转为日期格式
 // 日期格式化函数
 // 定义类型：限定显示粒度的参数值，增强类型安全
-export function formatDate(dateStr: string | undefined | null, withTime: boolean = false): string {
-  if (!dateStr || typeof dateStr !== 'string') {
+export function formatDate(
+  dateStr: string | number | undefined | null,
+  withTime: boolean = false,
+): string {
+  if (dateStr == null) {
     return '-'
   }
 
   if (withTime) {
-    return dateStr
+    return String(dateStr)
   }
 
   const dateObj = new Date(dateStr)

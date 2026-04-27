@@ -26,6 +26,9 @@
         </div>
 
         <div class="quiz-footer">
+          <el-button v-if="!isMySurvey" type="success" size="large" @click="importSurvey">
+            一键导入
+          </el-button>
           <el-button type="primary" size="large" :loading="submitting" @click="submitAnswers">
             提交答案
           </el-button>
@@ -42,6 +45,7 @@ import type { Ref } from 'vue'
 import type { QuizData } from '@/types'
 // 工具
 import { restoreComponentStatus } from '@/utils'
+import { parseToken } from '@/utils/auth'
 // 组合式函数
 import { useSurveyNo } from '@/utils/hooks'
 // 引入 ElementPlus 库
@@ -56,11 +60,19 @@ const router = useRouter()
 
 const loading = ref(true)
 const submitting = ref(false)
-const quizData = ref<QuizData & { title?: string; description?: string }>({
+const currentUserId = ref<number | null>(null)
+const quizData = ref<
+  QuizData & { title?: string; description?: string; userId?: number; id?: number }
+>({
   coms: [],
   surveyCount: 0,
   title: '',
   description: '',
+})
+
+// 判断是否是"我的"问卷
+const isMySurvey = computed(() => {
+  return currentUserId.value !== null && quizData.value.userId === currentUserId.value
 })
 
 // 用于存储所有问题的答案
@@ -69,6 +81,7 @@ const answers: Ref<{ [key: number]: string | number | Date }> = ref({})
 const serialNum = computed(() => useSurveyNo(quizData.value?.coms).value)
 
 onMounted(async () => {
+  currentUserId.value = parseToken()
   const quizId = route.params.id as string
   if (!quizId) {
     ElMessage.error('问卷ID不存在')
@@ -127,6 +140,20 @@ const submitAnswers = async () => {
   } finally {
     submitting.value = false
   }
+}
+
+const importSurvey = () => {
+  // 将问卷数据保存到 localStorage 中，在编辑器页面读取
+  const importData = {
+    title: quizData.value.title,
+    description: quizData.value.description,
+    coms: quizData.value.coms,
+  }
+  localStorage.setItem('importSurveyData', JSON.stringify(importData))
+  ElMessage.success('问卷信息已准备好，即将跳转到编辑器')
+  setTimeout(() => {
+    router.push('/editor')
+  }, 500)
 }
 </script>
 

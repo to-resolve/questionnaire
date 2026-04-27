@@ -36,7 +36,7 @@
               <div class="card-header">
                 <span class="survey-title">{{ survey.title }}</span>
                 <div class="tag-group">
-                  <el-tag size="small" type="success">已发布</el-tag>
+                  <el-tag v-if="isMySurvey(survey)" size="small" type="warning">我的</el-tag>
                   <el-tag v-if="isParticipated(survey.id)" size="small" type="info">已参与</el-tag>
                 </div>
               </div>
@@ -88,6 +88,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { Search, Tickets, Calendar } from '@element-plus/icons-vue'
 import { getPublishedSurveyList } from '@/api/questionnaire'
 import { formatDate } from '@/utils'
+import { parseToken } from '@/utils/auth'
 import { useRouter } from 'vue-router'
 import type { SurveyDBReturnData } from '@/types'
 
@@ -97,6 +98,7 @@ const searchKeyword = ref('')
 const publishedSurveys = ref<SurveyDBReturnData[]>([])
 const participatedSurveyIds = ref<number[]>([])
 const total = ref(0)
+const currentUserId = ref<number | null>(null)
 
 const pageParams = reactive({
   page: 1,
@@ -105,6 +107,10 @@ const pageParams = reactive({
 
 const isParticipated = (surveyId: number | string): boolean => {
   return participatedSurveyIds.value.includes(Number(surveyId))
+}
+
+const isMySurvey = (survey: SurveyDBReturnData): boolean => {
+  return currentUserId.value !== null && survey.userId === currentUserId.value
 }
 
 const fetchPublishedSurveys = async () => {
@@ -155,6 +161,7 @@ const participateSurvey = (id: number) => {
 }
 
 onMounted(() => {
+  currentUserId.value = parseToken()
   fetchPublishedSurveys()
 })
 </script>
