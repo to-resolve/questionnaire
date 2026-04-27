@@ -26,13 +26,19 @@ export async function addSurvey(survey: addSurveyData) {
 
 // 删除问卷
 export async function deleteSurvey(id: number, userId: number) {
-  const data = await request.delete(`/survey`, { id, userId })
+  const data = await request.delete('/survey', { id, userId })
   return data
 }
 
 // 更新问卷
 export async function updateSurvey(param: updateSurveyData) {
   const data = await request.put('/survey', param)
+  return data
+}
+
+// 撤销发布问卷
+export async function unpublishSurvey(surveyId: number) {
+  const data = await request.put(`/survey/unpublish/${surveyId}`)
   return data
 }
 
@@ -67,5 +73,28 @@ export async function getQuiz(quizId: string | number) {
 // 提交答案
 export async function submitAnswers(quizId: string | number, answers: any) {
   const data = await request.post('/submitAnswers', { quizId, answers })
+  return data
+}
+
+// 获取所有问卷（管理员用）
+export async function getAllSurveyList(params: {
+  page: number
+  pageSize: number
+  title?: string
+  status?: number
+}) {
+  const data = await request.get('/admin/survey/page', params)
+  return data
+}
+
+// 删除问卷（管理员用）
+export async function deleteSurveyAdmin(id: number) {
+  const data = await request.delete(`/admin/survey/${id}`)
+  return data
+}
+
+// 撤销发布问卷（管理员用）
+export async function unpublishSurveyAdmin(surveyId: number) {
+  const data = await request.put(`/admin/survey/unpublish/${surveyId}`)
   return data
 }

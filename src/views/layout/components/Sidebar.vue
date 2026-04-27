@@ -37,7 +37,7 @@
       <el-sub-menu index="questionnaire">
         <template #title>
           <el-icon><Document /></el-icon>
-          <span>问卷管理</span>
+          <span>问卷创作</span>
         </template>
         <el-menu-item index="/editor/survey-type">
           <el-icon><Plus /></el-icon>
@@ -59,10 +59,20 @@
         <template #title>个人中心</template>
       </el-menu-item>
 
-      <el-menu-item index="/user-management" v-if="userInfo.username === 'admin'">
-        <el-icon><Setting /></el-icon>
-        <template #title>用户管理</template>
-      </el-menu-item>
+      <el-sub-menu index="system-management" v-if="userInfo.username === 'admin'">
+        <template #title>
+          <el-icon><Tools /></el-icon>
+          <span>系统管理</span>
+        </template>
+        <el-menu-item index="/user-management">
+          <el-icon><Setting /></el-icon>
+          <template #title>用户管理</template>
+        </el-menu-item>
+        <el-menu-item index="/questionnaire-management">
+          <el-icon><Document /></el-icon>
+          <template #title>问卷管理</template>
+        </el-menu-item>
+      </el-sub-menu>
     </el-menu>
 
     <div class="user-info" v-if="!isCollapse">
@@ -98,6 +108,7 @@ import {
   Setting,
   Shop,
   Briefcase,
+  Tools,
 } from '@element-plus/icons-vue'
 import { getUserInfoByUserId } from '@/api/user'
 import { parseToken } from '@/utils/auth'

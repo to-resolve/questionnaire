@@ -168,17 +168,14 @@
                 >
               </div>
               <div class="header-right">
-                <el-dropdown>
-                  <el-button>
-                    批量操作<el-icon class="el-icon--right"><arrow-down /></el-icon>
-                  </el-button>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item @click="batchDelete">批量删除</el-dropdown-item>
-                      <el-dropdown-item @click="batchExport">批量导出</el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
+                <el-button
+                  type="danger"
+                  plain
+                  :disabled="selectedRows.length === 0"
+                  @click="batchDelete"
+                >
+                  批量删除
+                </el-button>
               </div>
             </div>
           </template>
@@ -252,6 +249,7 @@
                       预览
                     </el-button>
                     <el-button
+                      v-if="scope.row.status === 0"
                       type="success"
                       size="small"
                       @click="editSurveyTitle(scope.row)"
@@ -260,12 +258,22 @@
                       编辑信息
                     </el-button>
                     <el-button
+                      v-if="scope.row.status === 0"
                       type="warning"
                       size="small"
                       @click="editSurvey(scope.row)"
                       :icon="Edit"
                     >
                       设计问卷
+                    </el-button>
+                    <el-button
+                      v-if="scope.row.status === 1"
+                      type="warning"
+                      size="small"
+                      @click="unpublishSurvey(scope.row)"
+                      :icon="RefreshLeft"
+                    >
+                      撤销发布
                     </el-button>
                     <el-button
                       type="danger"
@@ -350,8 +358,8 @@ import {
   Plus,
   Compass,
   Refresh,
+  RefreshLeft,
   Search,
-  ArrowDown,
   Document,
   Check,
   Edit,
@@ -374,7 +382,13 @@ import { useRouter } from 'vue-router'
 import type { SurveyDBData, SurveyDBReturnData } from '@/types'
 import type { TableColumnCtx } from 'element-plus'
 // axios
-import { getSurveyListByUserId, getSurveyPageListByUserId, updateSurvey } from '@/api/questionnaire'
+import {
+  getSurveyListByUserId,
+  getSurveyPageListByUserId,
+  updateSurvey,
+  unpublishSurvey as unpublishSurveyAPI,
+  deleteSurvey,
+} from '@/api/questionnaire'
 // 工具方法
 import { formatDate } from '@/utils'
 import { remove } from '@/utils/dboperate'
@@ -487,9 +501,16 @@ const handleSelectionChange = (selection: SurveyDBReturnData[]) => {
   selectedRows.value = selection
 }
 
-const batchDelete = () => {
+const batchDelete = async () => {
   if (selectedRows.value.length === 0) {
     ElMessage.warning('请先选择要删除的问卷')
+    return
+  }
+
+  // 检查是否包含已发布的问卷
+  const hasPublished = selectedRows.value.some((row) => row.status === 1)
+  if (hasPublished) {
+    ElMessage.warning('删除已发布问卷需先撤销发布')
     return
   }
 
@@ -497,13 +518,20 @@ const batchDelete = () => {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning',
-  }).then(() => {
-    // 执行批量删除逻辑
-    selectedRows.value.forEach((row) => {
-      remove(row.id, row.userId)
-    })
-    getSurveyData()
-    ElMessage.success('批量删除成功')
+  }).then(async () => {
+    try {
+      // 执行批量删除逻辑
+      const deletePromises = selectedRows.value.map((row) => deleteSurvey(row.id, row.userId))
+      await Promise.all(deletePromises)
+      ElMessage.success('批量删除成功')
+      getSurveyData()
+      getTableData()
+      // 清空选中
+      selectedRows.value = []
+    } catch (error) {
+      ElMessage.error('批量删除失败')
+      console.error(error)
+    }
   })
 }
 
@@ -513,42 +541,6 @@ const exportToPDF = (surveyInfo: SurveyDBReturnData) => {
     path: `/preview/${surveyInfo.id}`,
     query: { autoPrint: 'true' },
     state: { from: 'home' },
-  })
-}
-
-const batchExport = () => {
-  if (selectedRows.value.length === 0) {
-    ElMessage.warning('请先选择要导出的问卷')
-    return
-  }
-
-  ElMessageBox.confirm(
-    `确定要导出选中的 ${selectedRows.value.length} 份问卷吗？\n\n将依次打开每个问卷的打印对话框，请选择"另存为PDF"。`,
-    '批量导出确认',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'info',
-    },
-  ).then(() => {
-    // 逐个导出问卷
-    let currentIndex = 0
-
-    const exportNext = () => {
-      if (currentIndex >= selectedRows.value.length) {
-        ElMessage.success('所有问卷导出请求已发送')
-        return
-      }
-
-      const survey = selectedRows.value[currentIndex]
-      exportToPDF(survey)
-      currentIndex++
-
-      // 延迟处理下一个，避免浏览器阻止多个弹窗
-      setTimeout(exportNext, 2000)
-    }
-
-    exportNext()
   })
 }
 
@@ -568,6 +560,10 @@ const editSurvey = (surveyInfo: SurveyDBReturnData) => {
 }
 
 const delSurvey = (surveyInfo: SurveyDBReturnData) => {
+  if (surveyInfo.status === 1) {
+    ElMessage.warning('删除已发布问卷需先撤销发布')
+    return
+  }
   remove(surveyInfo.id, surveyInfo.userId).then(() => {
     getSurveyData()
     getTableData()
@@ -587,6 +583,22 @@ const publishSurvey = (surveyInfo: SurveyDBReturnData) => {
     }).then((res) => {
       if (res && res.code === 200) {
         ElMessage.success('发布成功')
+        getSurveyData()
+        getTableData()
+      }
+    })
+  })
+}
+
+const unpublishSurvey = (surveyInfo: SurveyDBReturnData) => {
+  ElMessageBox.confirm('撤销发布后会删除该问卷的答案统计数据，是否撤销发布？', '撤销发布确认', {
+    confirmButtonText: '确定撤销',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(() => {
+    unpublishSurveyAPI(surveyInfo.id).then((res) => {
+      if (res && res.code === 200) {
+        ElMessage.success('撤销发布成功')
         getSurveyData()
         getTableData()
       }

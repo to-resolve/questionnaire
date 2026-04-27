@@ -34,7 +34,7 @@ const router = createRouter({
           path: '/home',
           name: 'home',
           component: HomeView,
-          meta: { title: '问卷管理' },
+          meta: { title: '问卷列表' },
         },
         {
           path: '/market',
@@ -297,7 +297,7 @@ const router = createRouter({
           path: '/editor/:id(\\d+)?',
           name: 'editor',
           component: () => import('@/views/EditorView/Index.vue'),
-          meta: { title: '问卷设计' },
+          meta: { title: '创建问卷' },
           children: [
             {
               path: 'survey-type',
@@ -341,6 +341,12 @@ const router = createRouter({
           name: 'user-management',
           component: () => import('@/views/UserManagement/index.vue'),
           meta: { title: '用户管理', requiresAdmin: true },
+        },
+        {
+          path: '/questionnaire-management',
+          name: 'questionnaire-management',
+          component: () => import('@/views/QuestionnaireManagement/index.vue'),
+          meta: { title: '问卷管理', requiresAdmin: true },
         },
       ],
     },

@@ -5,11 +5,7 @@
       <div class="left flex align-items-center pl-15 pr-15">
         <div class="breadcrumb-wrapper">
           <el-breadcrumb separator="/">
-            <el-breadcrumb-item
-              v-for="(item, index) in breadcrumbItems"
-              :key="index"
-              :to="item.path"
-            >
+            <el-breadcrumb-item v-for="(item, index) in breadcrumbItems" :key="index">
               <el-icon v-if="item.icon" class="breadcrumb-icon">
                 <component :is="item.icon" />
               </el-icon>
@@ -166,26 +162,6 @@
             </template>
           </el-dropdown>
         </div>
-
-        <!-- 快捷操作按钮 -->
-        <div class="quick-actions">
-          <el-tooltip content="帮助文档" placement="bottom">
-            <el-button circle size="small" @click="showHelp" class="quick-action-btn help-btn">
-              <el-icon><QuestionFilled /></el-icon>
-            </el-button>
-          </el-tooltip>
-          <el-tooltip content="消息通知" placement="bottom">
-            <el-button
-              circle
-              size="small"
-              @click="showNotifications"
-              class="quick-action-btn notification-btn"
-            >
-              <el-icon><Bell /></el-icon>
-              <el-badge :value="notificationCount" :max="99" class="notification-badge" />
-            </el-button>
-          </el-tooltip>
-        </div>
       </div>
     </div>
 
@@ -212,8 +188,6 @@ import {
   Delete,
   FolderAdd,
   View,
-  QuestionFilled,
-  Bell,
   House,
   Grid,
   Document,
@@ -242,7 +216,6 @@ const store = useEditorStore() as EditorStore
 const surveyDialogRef = ref()
 const isSaveMode = ref(0) // 0：默认，1：预览，2：保存
 const dialogVisible = ref(false)
-const notificationCount = ref(3) // 模拟通知数量
 
 const props = defineProps({
   isEditor: {
@@ -416,16 +389,6 @@ function goBack() {
 // 转发预览页操作到页面组件
 function handlePreviewAction(action: string) {
   emitter.emit('preview-action', action as any)
-}
-
-// 显示帮助文档
-function showHelp() {
-  ElMessage.info('帮助文档功能开发中...')
-}
-
-// 显示通知
-function showNotifications() {
-  ElMessage.info('消息通知功能开发中...')
 }
 
 // 下拉菜单处理
