@@ -20,10 +20,10 @@
         <transition name="fade" mode="out-in">
           <!-- 编辑页操作 -->
           <div v-if="isEditor" class="editor-actions">
-            <el-button type="info" size="small" @click="goBack" class="action-btn back-btn">
+            <!-- <el-button type="info" size="small" @click="goBack" class="action-btn back-btn">
               <el-icon class="btn-icon"><Back /></el-icon>
               返回
-            </el-button>
+            </el-button> -->
             <el-button
               type="default"
               size="small"
@@ -42,7 +42,7 @@
               class="action-btn redo-btn"
             >
               <el-icon class="btn-icon"><ArrowRight /></el-icon>
-              重做
+              恢复
             </el-button>
             <div v-if="id" class="actions-group">
               <el-button

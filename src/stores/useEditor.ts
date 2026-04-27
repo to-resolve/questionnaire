@@ -18,7 +18,7 @@ import {
   setOptionsStatusByIndex,
   setPicLinkByIndex,
 } from '@/stores/actions'
-import type { TypeStatus, Status, SurveyDBData } from '@/types'
+import type { TypeStatus, Status, SurveyDBData, SurveyDBReturnData } from '@/types'
 import { isSurveyComName } from '@/types'
 import { restoreComponentStatus } from '@/utils'
 import { v4 as uuidv4 } from 'uuid'
@@ -238,6 +238,11 @@ interface HistorySnapshot {
 
 export const useEditorStore = defineStore('editor', {
   state: () => ({
+    id: null as number | null,
+    userId: null as number | null,
+    title: '问卷标题',
+    description: '默认描述内容',
+    status: 0 as number,
     currentComponentIndex: -1, // 当前选中的组件（-1表示没有选中的组件）
     surveyCount: 0, // 用于对问题进行计数
     // 每个业务组件的状态，一开始有两个默认的业务组件
@@ -291,7 +296,12 @@ export const useEditorStore = defineStore('editor', {
       this.redoStack = []
     },
     // 还原已有问卷的仓库状态
-    setStore(storeStatus: SurveyDBData) {
+    setStore(storeStatus: SurveyDBReturnData) {
+      this.id = storeStatus.id
+      this.userId = storeStatus.userId
+      this.title = storeStatus.title
+      this.description = storeStatus.description
+      this.status = storeStatus.status
       this.surveyCount = storeStatus.surveyCount
       this.currentComponentIndex = -1
       // coms 可能是字符串（从数据库读取）或已经是对象数组（已被解析过）
@@ -304,6 +314,11 @@ export const useEditorStore = defineStore('editor', {
     // 初始化仓库，有些时候仓库已经有状态了
     // 创建一个新的问卷的时候，需要初始化仓库
     initStore() {
+      this.id = null
+      this.userId = null
+      this.title = '问卷标题'
+      this.description = '默认描述内容'
+      this.status = 0
       this.surveyCount = 0
       this.currentComponentIndex = -1
       this.coms = initStore()

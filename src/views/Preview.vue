@@ -33,11 +33,10 @@ import { ArrowLeft } from '@element-plus/icons-vue'
 import { useEditorStore } from '@/stores/useEditor'
 const store = useEditorStore()
 // db
-import { getSurveyListByUserId } from '@/api/questionnaire'
+import { getSurveyListByUserId, updateSurvey } from '@/api/questionnaire'
 // 工具
 import { restoreComponentStatus } from '@/utils'
 import { parseToken } from '@/utils/auth'
-import { v4 as uuidv4 } from 'uuid'
 // 引入 ElementPlus 库
 import { ElMessage } from 'element-plus'
 import { isUseForPDF } from '@/types'
@@ -166,25 +165,26 @@ function genPDF() {
 const dialogVisible = ref(false) // 控制弹窗
 const quizLink = ref('') // 问卷链接
 // 生成在线问卷
-function genQuiz() {
-  const id = uuidv4()
-  // 将问卷信息和唯一ID保存到服务器
-  fetch('/api/saveQuiz', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      id,
-      quizData: {
-        coms: JSON.stringify(store.coms),
-        surveyCount: store.surveyCount,
-      },
-    }),
-  })
-  // 打开对话框，显示在线答题链接
-  quizLink.value = `${window.location.origin}/quiz/${id}`
-  dialogVisible.value = true
+async function genQuiz() {
+  try {
+    if (!store.id || !store.userId) {
+      ElMessage.error('问卷信息不完整，无法发布')
+      return
+    }
+
+    // 检查问卷是否已发布
+    if (store.status !== 1) {
+      ElMessage.warning('该功能需要先将问卷发布')
+      return
+    }
+
+    // 已发布的问卷直接显示在线答题链接
+    quizLink.value = `${window.location.origin}/quiz/${store.id}`
+    dialogVisible.value = true
+  } catch (error) {
+    console.error('生成问卷链接失败:', error)
+    ElMessage.error('生成问卷链接失败，请重试')
+  }
 }
 
 function copyLink() {

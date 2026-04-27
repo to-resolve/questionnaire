@@ -1,4 +1,11 @@
-import type { TextProps, OptionsProps, Status, Material, SurveyDBData } from '@/types'
+import type {
+  TextProps,
+  OptionsProps,
+  Status,
+  Material,
+  SurveyDBData,
+  SurveyDBReturnData,
+} from '@/types'
 
 // 定义 updateStatus 的类型
 export type UpdateStatus = (
@@ -61,12 +68,17 @@ export interface MaterialStore extends Actions {
 }
 
 export interface EditorStore extends Actions {
+  id: number | null
+  userId: number | null
+  title: string
+  description: string
+  status: number
   currentComponentIndex: number
   surveyCount: number
   coms: Status[]
   setCurrentComponentIndex: (index: number) => void
   addCom: (coms: Status[], newCom: Status) => void
-  setStore: (storeStatus: SurveyDBData) => void
+  setStore: (storeStatus: SurveyDBReturnData) => void
   initStore: () => void
   removeCom: (index: number) => void
   resetComs: () => void

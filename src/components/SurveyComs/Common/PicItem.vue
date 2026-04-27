@@ -6,8 +6,10 @@
           class="avatar-uploader"
           action="/api/upload"
           name="image"
+          :headers="uploadHeaders"
           :show-file-list="false"
           :on-success="handleAvatarSuccess"
+          :on-error="handleAvatarError"
           :before-upload="beforeAvatarUpload"
         >
           <img v-if="imageUrl" :src="imageUrl" class="avatar" />
@@ -33,6 +35,7 @@ import { ElMessage } from 'element-plus'
 import { Upload } from '@element-plus/icons-vue'
 import type { UploadProps } from 'element-plus'
 import type { GetLink } from '@/types'
+import { getToken } from '@/utils/auth'
 const props = defineProps({
   picTitle: {
     type: String,
@@ -55,15 +58,16 @@ const imageUrl = ref('')
 // 预览的时候不会有注入，所以需要设置默认值
 const getPicLink = inject<GetLink>('getPicLink', () => {})
 
+// 添加请求头
+const uploadHeaders = ref({
+  Authorization: `Bearer ${getToken()}`,
+})
+
 watch(
   () => props.value,
-  async (newVal) => {
+  (newVal) => {
     if (newVal) {
-      const response = await fetch(newVal)
-      const blob = await response.blob()
-      // 使用 Blob 创建 File 对象
-      const file = new File([blob], 'filename.jpg', { type: blob.type })
-      imageUrl.value = URL.createObjectURL(file)
+      imageUrl.value = newVal
     } else {
       imageUrl.value = ''
     }
@@ -72,16 +76,32 @@ watch(
 )
 
 const handleAvatarSuccess: UploadProps['onSuccess'] = async (response) => {
-  if (getPicLink)
-    getPicLink({
-      index: props.index,
-      link: response.imageUrl,
-    })
+  if (response.code === 200) {
+    if (getPicLink)
+      getPicLink({
+        index: props.index,
+        link: response.data,
+      })
+    ElMessage.success('图片上传成功！')
+  } else {
+    ElMessage.error(response.message || '图片上传失败')
+  }
+}
+
+// 图片上传失败回调
+const handleAvatarError = () => {
+  ElMessage.error('图片上传失败，请稍后重试！')
 }
 
 const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
-  if (rawFile.size / 1024 / 1024 > 2) {
-    ElMessage.error('上传图片不能超过2MB!')
+  const isImage = rawFile.type.startsWith('image/')
+  if (!isImage) {
+    ElMessage.error('请选择图片格式的文件（jpg/png/gif 等）！')
+    return false
+  }
+  const isLt5M = rawFile.size / 1024 / 1024 < 5
+  if (!isLt5M) {
+    ElMessage.error('上传图片大小不能超过 5MB！')
     return false
   }
   return true

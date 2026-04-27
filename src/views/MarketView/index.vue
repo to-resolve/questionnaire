@@ -7,6 +7,7 @@
 
     <div class="filter-section">
       <el-input
+        style="width: 400px"
         v-model="searchKeyword"
         placeholder="搜索问卷标题或描述"
         class="search-input"
