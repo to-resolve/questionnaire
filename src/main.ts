@@ -12,7 +12,7 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 // 引入样式
 import './assets/css/index.scss'
 // 引入全局打印样式
-import './styles/print.css'
+import './assets/css/print.css'
 
 // 引入 Font Awesome 图标库
 import { library } from '@fortawesome/fontawesome-svg-core'

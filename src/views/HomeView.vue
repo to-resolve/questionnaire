@@ -1,37 +1,5 @@
 <template>
   <div class="enterprise-home">
-    <!-- 顶部导航栏 -->
-    <!-- <div class="top-navigation">
-      <div class="nav-left">
-        <div class="logo-section">
-          <el-icon class="logo-icon"><Collection /></el-icon>
-          <span class="logo-text">问卷星企业版</span>
-        </div>
-        <div class="breadcrumb">
-          <el-breadcrumb separator="/">
-            <el-breadcrumb-item>首页</el-breadcrumb-item>
-            <el-breadcrumb-item>问卷管理</el-breadcrumb-item>
-          </el-breadcrumb>
-        </div>
-      </div>
-
-      <div class="nav-right">
-        <el-dropdown>
-          <span class="user-info">
-            <el-avatar :size="32" icon="User" />
-            <span class="username">管理员</span>
-            <el-icon><ArrowDown /></el-icon>
-          </span>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item>个人设置</el-dropdown-item>
-              <el-dropdown-item>退出登录</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
-    </div> -->
-
     <!-- 主要内容区域 -->
     <div class="main-content">
       <!-- 数据概览卡片 -->
@@ -200,7 +168,13 @@
               </template>
             </el-table-column>
 
-            <el-table-column prop="title" label="问卷标题" min-width="220" show-overflow-tooltip>
+            <el-table-column
+              prop="title"
+              label="问卷标题"
+              min-width="220"
+              show-overflow-tooltip
+              class-name="title-column"
+            >
               <template #default="{ row }">
                 <div class="title-cell">
                   <el-icon class="title-icon"><Document /></el-icon>
@@ -220,11 +194,24 @@
               </template>
             </el-table-column>
 
-            <el-table-column prop="surveyCount" label="题目数" width="100" align="center">
+            <el-table-column
+              prop="surveyCount"
+              label="题目数"
+              width="120"
+              align="center"
+              class-name="survey-count-column"
+            >
               <template #default="{ row }">
-                <el-badge :value="row.surveyCount" class="question-badge" :max="99" type="primary">
-                  <el-icon><Tickets /></el-icon>
-                </el-badge>
+                <div class="badge-wrapper">
+                  <el-badge
+                    :value="row.surveyCount"
+                    class="question-badge"
+                    :max="99"
+                    type="primary"
+                  >
+                    <el-icon><Tickets /></el-icon>
+                  </el-badge>
+                </div>
               </template>
             </el-table-column>
 
@@ -481,6 +468,7 @@ const goToComMarket = () => {
 
 const refreshData = () => {
   getSurveyData()
+  getTableData()
 }
 
 const applyFilters = () => {
@@ -635,6 +623,7 @@ const editSurveyTitle = (surveyInfo: SurveyDBReturnData) => {
 // Dialog 提交成功的回调
 const handleDialogSuccess = () => {
   getSurveyData()
+  getTableData()
 }
 
 const statusFormatDate = (
@@ -654,6 +643,13 @@ onMounted(() => {
 <style scoped lang="scss">
 :deep(.el-table .cell) {
   overflow: visible;
+}
+
+// 给标题列的cell设置overflow hidden，防止文字溢出
+:deep(.el-table) {
+  .title-column .cell {
+    overflow: hidden !important;
+  }
 }
 
 .enterprise-home {
@@ -951,15 +947,23 @@ onMounted(() => {
                 }
 
                 .title-content {
+                  overflow: hidden;
+
                   .main-title {
                     font-weight: 500;
                     color: #303133;
                     margin-bottom: 4px;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
                   }
 
                   .sub-title {
                     font-size: 12px;
                     color: #909399;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
                   }
                 }
               }
